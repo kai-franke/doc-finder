@@ -1,0 +1,947 @@
+<html lang="de"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocFinder – Mockup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f7;
+    --sidebar-bg: #ececec;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.14);
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #aeaeb2;
+    --accent: #0071e3;
+    --accent-hover: #0077ed;
+    --accent-soft: rgba(0,113,227,0.08);
+    --red: #ff3b30;
+    --red-soft: rgba(255,59,48,0.08);
+    --green: #34c759;
+    --green-soft: rgba(52,199,89,0.1);
+    --warning: #ff9500;
+    --sidebar-width: 240px;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: -apple-system, 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* TITLE BAR */
+  .titlebar {
+    height: 38px;
+    background: var(--sidebar-bg);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    -webkit-app-region: drag;
+    position: relative;
+  }
+
+  .traffic-lights {
+    display: flex;
+    gap: 7px;
+    margin-right: 12px;
+  }
+
+  .traffic-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .tl-close { background: #ff5f57; border: 0.5px solid rgba(0,0,0,0.12); }
+  .tl-min   { background: #febc2e; border: 0.5px solid rgba(0,0,0,0.12); }
+  .tl-max   { background: #28c840; border: 0.5px solid rgba(0,0,0,0.12); }
+
+  .titlebar-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: -0.01em;
+  }
+
+  /* MAIN LAYOUT */
+  .app {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border-strong);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .sidebar-section {
+    padding: 16px 12px 8px;
+  }
+
+  .sidebar-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0 4px;
+    margin-bottom: 6px;
+  }
+
+  .folder-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .folder-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.12s;
+    position: relative;
+  }
+
+  .folder-item:hover { background: rgba(0,0,0,0.05); }
+  .folder-item:hover .folder-remove { opacity: 1; }
+
+  .folder-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+
+  .folder-info {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .folder-name {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .folder-meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 1px;
+  }
+
+  .folder-remove {
+    opacity: 0;
+    transition: opacity 0.12s;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+  }
+
+  .folder-remove:hover { color: var(--red); background: var(--red-soft); }
+
+  .btn-add-folder {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    border: 1.5px dashed var(--border-strong);
+    background: transparent;
+    color: var(--accent);
+    font-size: 12.5px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 6px;
+    transition: background 0.12s, border-color 0.12s;
+    font-family: inherit;
+  }
+
+  .btn-add-folder:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 12px;
+  }
+
+  /* INDEX STATUS */
+  .index-section {
+    padding: 12px;
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+  }
+
+  .index-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-dot.ok { background: var(--green); }
+  .status-dot.warning { background: var(--warning); }
+  .status-dot.error { background: var(--red); }
+
+  .status-text {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    flex: 1;
+    line-height: 1.35;
+  }
+
+  .btn-index {
+    width: 100%;
+    padding: 7px 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.12s;
+    letter-spacing: -0.01em;
+  }
+
+  .btn-index:hover { background: var(--accent-hover); }
+
+  .ollama-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* MAIN CONTENT */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* SEARCH BAR */
+  .search-bar {
+    padding: 16px 20px 12px;
+    flex-shrink: 0;
+  }
+
+  .search-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-size: 14px;
+    color: var(--text-primary);
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    letter-spacing: -0.01em;
+  }
+
+  .search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+  }
+
+  .search-input::placeholder { color: var(--text-tertiary); }
+
+  .search-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding: 0 2px;
+  }
+
+  .results-count {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  .results-count span { color: var(--text-secondary); font-weight: 500; }
+
+  /* RESULTS */
+  .results {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .results::-webkit-scrollbar { width: 6px; }
+  .results::-webkit-scrollbar-track { background: transparent; }
+  .results::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.12s, box-shadow 0.12s, transform 0.1s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+
+  .result-card:hover {
+    border-color: rgba(0,113,227,0.3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+  }
+
+  .result-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 7px;
+  }
+
+  .pdf-icon {
+    width: 32px;
+    height: 38px;
+    background: #ff3b30;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    margin-top: 1px;
+  }
+
+  .pdf-icon::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 9px; height: 9px;
+    background: rgba(255,255,255,0.3);
+    border-bottom-left-radius: 3px;
+  }
+
+  .pdf-icon span {
+    font-size: 8px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.02em;
+    margin-top: 4px;
+  }
+
+  .result-info { flex: 1; overflow: hidden; }
+
+  .result-filename {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .result-path {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .result-score {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .score-bar {
+    width: 40px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .score-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  .score-value {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    min-width: 28px;
+    text-align: right;
+  }
+
+  .result-snippet {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .result-snippet mark {
+    background: rgba(0,113,227,0.12);
+    color: var(--accent);
+    border-radius: 2px;
+    padding: 0 1px;
+    font-weight: 500;
+  }
+
+  .result-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .result-date {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-action {
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.1s, color 0.1s;
+  }
+
+  .btn-action:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .btn-action.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-action.primary:hover { background: var(--accent-hover); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--text-tertiary);
+    padding: 40px;
+    text-align: center;
+  }
+
+  .empty-icon {
+    font-size: 40px;
+    margin-bottom: 4px;
+    opacity: 0.4;
+  }
+
+  .empty-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: -0.01em;
+  }
+
+  .empty-sub {
+    font-size: 12.5px;
+    color: var(--text-tertiary);
+    max-width: 260px;
+    line-height: 1.5;
+  }
+
+  /* INDEXING PROGRESS (shown during indexing) */
+  .progress-bar-wrap {
+    margin-top: 8px;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 5px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 62%;
+    transition: width 0.3s;
+  }
+
+  .progress-text {
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+  }
+
+  /* TABS for switching between views */
+  .view-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+
+  .view-tab {
+    padding: 8px 12px;
+    font-size: 12.5px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.12s;
+    font-weight: 500;
+  }
+
+  .view-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .view-tab:hover:not(.active) { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: Normal state with search results -->
+<div style="display:flex; gap:24px; padding:24px; background:#e8e8ed; min-height:100vh; align-items:flex-start; flex-wrap:wrap;">
+
+  <div>
+    <p style="font-size:11px; font-weight:600; color:#6e6e73; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px;">Screen 1 – Suchergebnisse</p>
+    <div style="width:820px; height:560px; border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.1); display:flex; flex-direction:column;">
+
+      <!-- Title Bar -->
+      <div class="titlebar">
+        <div class="traffic-lights">
+          <div class="traffic-light tl-close"></div>
+          <div class="traffic-light tl-min"></div>
+          <div class="traffic-light tl-max"></div>
+        </div>
+        <div class="titlebar-title">DocFinder</div>
+      </div>
+
+      <div class="app">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Quellordner</div>
+            <div class="folder-list">
+              <div class="folder-item">
+                <svg class="folder-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                <div class="folder-info">
+                  <div class="folder-name">Documents</div>
+                  <div class="folder-meta">142 PDFs</div>
+                </div>
+                <div class="folder-remove">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="10" y2="10"></line><line x1="10" y1="2" x2="2" y2="10"></line></svg>
+                </div>
+              </div>
+              <div class="folder-item">
+                <svg class="folder-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                <div class="folder-info">
+                  <div class="folder-name">Emails</div>
+                  <div class="folder-meta">38 PDFs</div>
+                </div>
+                <div class="folder-remove">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="10" y2="10"></line><line x1="10" y1="2" x2="2" y2="10"></line></svg>
+                </div>
+              </div>
+              <div class="folder-item">
+                <svg class="folder-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                <div class="folder-info">
+                  <div class="folder-name">Verträge</div>
+                  <div class="folder-meta">21 PDFs</div>
+                </div>
+                <div class="folder-remove">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="10" y2="10"></line><line x1="10" y1="2" x2="2" y2="10"></line></svg>
+                </div>
+              </div>
+            </div>
+            <button class="btn-add-folder">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="6.5" y1="1" x2="6.5" y2="12"></line><line x1="1" y1="6.5" x2="12" y2="6.5"></line></svg>
+              Ordner hinzufügen
+            </button>
+          </div>
+
+          <div class="index-section">
+            <div class="index-status">
+              <div class="status-dot ok"></div>
+              <div class="status-text">201 Dokumente indexiert<br>Zuletzt: heute, 09:14</div>
+            </div>
+            <button class="btn-index">Index aktualisieren</button>
+            <div class="ollama-status">
+              <div class="status-dot ok"></div>
+              Ollama läuft
+            </div>
+          </div>
+        </div>
+
+        <!-- Main -->
+        <div class="main">
+          <div class="search-bar">
+            <div class="search-input-wrap">
+              <svg class="search-icon" width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6.5" cy="6.5" r="5"></circle><line x1="10.5" y1="10.5" x2="14" y2="14"></line></svg>
+              <input class="search-input" value="Rechnungen im Zusammenhang mit meinem Auto" readonly="">
+            </div>
+            <div class="search-meta">
+              <div class="results-count"><span>7 Ergebnisse</span> für deine Suche</div>
+            </div>
+          </div>
+
+          <div class="results">
+
+            <!-- Result 1 -->
+            <div class="result-card">
+              <div class="result-header">
+                <div class="pdf-icon"><span>PDF</span></div>
+                <div class="result-info">
+                  <div class="result-filename">KFZ-Rechnung_Werkstatt_März2024.pdf</div>
+                  <div class="result-path">~/Documents/Auto/Werkstatt</div>
+                </div>
+                <div class="result-score">
+                  <div class="score-bar"><div class="score-fill" style="width:94%"></div></div>
+                  <div class="score-value">94%</div>
+                </div>
+              </div>
+              <div class="result-snippet">Rechnung für Inspektion und Ölwechsel am <mark>Fahrzeug</mark> VW Golf (Kennzeichen HH-KA 412). Gesamtbetrag: 348,50 € inkl. <mark>MwSt</mark>. Fälligkeit: 15.03.2024.</div>
+              <div class="result-footer">
+                <div class="result-date">15. März 2024</div>
+                <div class="result-actions">
+                  <button class="btn-action">Im Finder zeigen</button>
+                  <button class="btn-action primary">Öffnen</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Result 2 -->
+            <div class="result-card">
+              <div class="result-header">
+                <div class="pdf-icon"><span>PDF</span></div>
+                <div class="result-info">
+                  <div class="result-filename">ADAC_Mitgliedschaft_Rechnung_2024.pdf</div>
+                  <div class="result-path">~/Documents/Versicherungen</div>
+                </div>
+                <div class="result-score">
+                  <div class="score-bar"><div class="score-fill" style="width:87%"></div></div>
+                  <div class="score-value">87%</div>
+                </div>
+              </div>
+              <div class="result-snippet">Jahresbeitrag ADAC Mitgliedschaft 2024. Leistungen: Pannenhilfe, <mark>Kfz</mark>-Schutzbrief, Auslandsschutz. Betrag: 89,00 € / Jahr.</div>
+              <div class="result-footer">
+                <div class="result-date">2. Januar 2024</div>
+                <div class="result-actions">
+                  <button class="btn-action">Im Finder zeigen</button>
+                  <button class="btn-action primary">Öffnen</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Result 3 -->
+            <div class="result-card">
+              <div class="result-header">
+                <div class="pdf-icon"><span>PDF</span></div>
+                <div class="result-info">
+                  <div class="result-filename">Haftpflicht_KFZ_2023_Rechnung.pdf</div>
+                  <div class="result-path">~/Emails/Zurich</div>
+                </div>
+                <div class="result-score">
+                  <div class="score-bar"><div class="score-fill" style="width:81%"></div></div>
+                  <div class="score-value">81%</div>
+                </div>
+              </div>
+              <div class="result-snippet"><mark>Kfz-Haftpflichtversicherung</mark> für VW Golf, Kennzeichen HH-KA 412. Jahresprämie 2023: 612,00 €. Versicherungsnehmer: Kai Franke.</div>
+              <div class="result-footer">
+                <div class="result-date">14. November 2023</div>
+                <div class="result-actions">
+                  <button class="btn-action">Im Finder zeigen</button>
+                  <button class="btn-action primary">Öffnen</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Indexing in progress -->
+  <div>
+    <p style="font-size:11px; font-weight:600; color:#6e6e73; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px;">Screen 2 – Indexierung läuft</p>
+    <div style="width:820px; height:560px; border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.1); display:flex; flex-direction:column;">
+
+      <div class="titlebar">
+        <div class="traffic-lights">
+          <div class="traffic-light tl-close"></div>
+          <div class="traffic-light tl-min"></div>
+          <div class="traffic-light tl-max"></div>
+        </div>
+        <div class="titlebar-title">DocFinder</div>
+      </div>
+
+      <div class="app">
+        <div class="sidebar">
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Quellordner</div>
+            <div class="folder-list">
+              <div class="folder-item">
+                <svg class="folder-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                <div class="folder-info">
+                  <div class="folder-name">Documents</div>
+                  <div class="folder-meta">142 PDFs</div>
+                </div>
+              </div>
+              <div class="folder-item">
+                <svg class="folder-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                <div class="folder-info">
+                  <div class="folder-name">Emails</div>
+                  <div class="folder-meta">38 PDFs</div>
+                </div>
+              </div>
+              <div class="folder-item">
+                <svg class="folder-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                <div class="folder-info">
+                  <div class="folder-name">Verträge</div>
+                  <div class="folder-meta">21 PDFs</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="index-section">
+            <div class="index-status">
+              <div class="status-dot warning"></div>
+              <div class="status-text">Indexierung läuft…</div>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar"><div class="progress-fill"></div></div>
+              <div class="progress-text">87 / 201 Dateien · ~2 Min verbleibend</div>
+              <div class="progress-text" style="margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Rechnung_Strom_Feb2024.pdf</div>
+            </div>
+            <button class="btn-index" style="margin-top:10px; background:#6e6e73;">Abbrechen</button>
+            <div class="ollama-status">
+              <div class="status-dot ok"></div>
+              Ollama läuft
+            </div>
+          </div>
+        </div>
+
+        <div class="main">
+          <div class="search-bar">
+            <div class="search-input-wrap">
+              <svg class="search-icon" width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6.5" cy="6.5" r="5"></circle><line x1="10.5" y1="10.5" x2="14" y2="14"></line></svg>
+              <input class="search-input" placeholder="Dokumente durchsuchen…" readonly="" style="opacity:0.5; cursor:not-allowed;">
+            </div>
+          </div>
+
+          <div class="empty-state">
+            <div class="empty-icon">⏳</div>
+            <div class="empty-title">Index wird aufgebaut</div>
+            <div class="empty-sub">Die Suche steht zur Verfügung sobald alle Dokumente verarbeitet wurden.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: Empty state / no results -->
+  <div>
+    <p style="font-size:11px; font-weight:600; color:#6e6e73; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px;">Screen 3 – Keine Ergebnisse</p>
+    <div style="width:820px; height:420px; border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.1); display:flex; flex-direction:column;">
+
+      <div class="titlebar">
+        <div class="traffic-lights">
+          <div class="traffic-light tl-close"></div>
+          <div class="traffic-light tl-min"></div>
+          <div class="traffic-light tl-max"></div>
+        </div>
+        <div class="titlebar-title">DocFinder</div>
+      </div>
+
+      <div class="app">
+        <div class="sidebar" style="justify-content:space-between;">
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Quellordner</div>
+            <div class="folder-list">
+              <div class="folder-item">
+                <svg class="folder-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                <div class="folder-info">
+                  <div class="folder-name">Documents</div>
+                  <div class="folder-meta">142 PDFs</div>
+                </div>
+              </div>
+            </div>
+            <button class="btn-add-folder">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="6.5" y1="1" x2="6.5" y2="12"></line><line x1="1" y1="6.5" x2="12" y2="6.5"></line></svg>
+              Ordner hinzufügen
+            </button>
+          </div>
+          <div class="index-section">
+            <div class="index-status">
+              <div class="status-dot ok"></div>
+              <div class="status-text">142 Dokumente indexiert</div>
+            </div>
+            <button class="btn-index">Index aktualisieren</button>
+            <div class="ollama-status"><div class="status-dot ok"></div>Ollama läuft</div>
+          </div>
+        </div>
+
+        <div class="main">
+          <div class="search-bar">
+            <div class="search-input-wrap">
+              <svg class="search-icon" width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6.5" cy="6.5" r="5"></circle><line x1="10.5" y1="10.5" x2="14" y2="14"></line></svg>
+              <input class="search-input" value="Bauzeichnungen Keller 1987" readonly="">
+            </div>
+            <div class="search-meta">
+              <div class="results-count">Keine Ergebnisse</div>
+            </div>
+          </div>
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <div class="empty-title">Keine Dokumente gefunden</div>
+            <div class="empty-sub">Versuche eine andere Formulierung oder prüfe ob alle relevanten Ordner hinzugefügt wurden.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: Ollama not running -->
+  <div>
+    <p style="font-size:11px; font-weight:600; color:#6e6e73; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px;">Screen 4 – Ollama nicht erreichbar</p>
+    <div style="width:820px; height:420px; border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.1); display:flex; flex-direction:column;">
+
+      <div class="titlebar">
+        <div class="traffic-lights">
+          <div class="traffic-light tl-close"></div>
+          <div class="traffic-light tl-min"></div>
+          <div class="traffic-light tl-max"></div>
+        </div>
+        <div class="titlebar-title">DocFinder</div>
+      </div>
+
+      <div class="app">
+        <div class="sidebar" style="justify-content:space-between;">
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Quellordner</div>
+            <div class="folder-list">
+              <div class="folder-item">
+                <svg class="folder-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                <div class="folder-info">
+                  <div class="folder-name">Documents</div>
+                  <div class="folder-meta">142 PDFs</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="index-section">
+            <div class="index-status">
+              <div class="status-dot error"></div>
+              <div class="status-text">Ollama nicht erreichbar</div>
+            </div>
+            <button class="btn-index" style="background: var(--red);">Erneut versuchen</button>
+            <div class="ollama-status"><div class="status-dot error"></div><span style="color:#ff3b30;">Ollama gestoppt</span></div>
+          </div>
+        </div>
+
+        <div class="main">
+          <div class="search-bar">
+            <div class="search-input-wrap">
+              <svg class="search-icon" width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6.5" cy="6.5" r="5"></circle><line x1="10.5" y1="10.5" x2="14" y2="14"></line></svg>
+              <input class="search-input" placeholder="Dokumente durchsuchen…" readonly="" style="opacity:0.5; cursor:not-allowed;">
+            </div>
+          </div>
+          <div class="empty-state">
+            <div class="empty-icon" style="opacity:1;">⚠️</div>
+            <div class="empty-title">Ollama ist nicht gestartet</div>
+            <div class="empty-sub" style="max-width:320px;">Starte Ollama im Terminal mit:<br><code style="background:rgba(0,0,0,0.06); padding:3px 7px; border-radius:4px; font-size:12px; margin-top:6px; display:inline-block;">ollama serve</code></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+</body></html>
