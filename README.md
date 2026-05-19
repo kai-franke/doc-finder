@@ -174,4 +174,4 @@ This is a learning project. Contributions, suggestions and feedback are welcome.
  
 ## License
  
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) for details
