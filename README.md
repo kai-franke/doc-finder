@@ -44,7 +44,12 @@ ollama pull nomic-embed-text
 > DocFinder starts Ollama automatically when the app launches. You do not need to run `ollama serve` manually.
  
 ---
- 
+
+## Mockup
+
+[Mockup](https://github.com/user-attachments/files/27385294/mockup.html)
+
+---
 ## Installation
  
 ### Run from source
