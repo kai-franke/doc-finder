@@ -16,7 +16,6 @@ export default defineConfig({
       preload: {
         input: path.join(__dirname, "src/main/preload.ts"),
       },
-      renderer: process.env.NODE_ENV === "test" ? undefined : {},
     }),
   ],
 });
