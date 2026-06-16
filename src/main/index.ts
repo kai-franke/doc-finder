@@ -40,8 +40,6 @@ function createWindow() {
     },
   })
 
-  registerFolderHandlers(win)
-
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', (new Date).toLocaleString())
@@ -73,4 +71,9 @@ app.on('activate', () => {
   }
 })
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  // Register IPC handlers once, decoupled from window creation — createWindow
+  // can run again on `activate`, and ipcMain.handle throws on a second register.
+  registerFolderHandlers()
+  createWindow()
+})
