@@ -26,6 +26,14 @@ let win: BrowserWindow | null
 
 function createWindow() {
   win = new BrowserWindow({
+    width: 920,
+    height: 640,
+    minWidth: 760,
+    minHeight: 520,
+    backgroundColor: '#f5f5f7',
+    title: 'DocFinder',
+    titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 16, y: 14 },
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
