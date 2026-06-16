@@ -60,11 +60,13 @@ async function removeFolder(folderPath: string): Promise<SourceFolder[]> {
 
 // --------- IPC registration ---------
 
-export function registerFolderHandlers(win: BrowserWindow): void {
-  ipcMain.handle('folders:add', async (): Promise<SourceFolder[]> => {
-    const result = await dialog.showOpenDialog(win, {
-      properties: ['openDirectory'],
-    })
+export function registerFolderHandlers(): void {
+  ipcMain.handle('folders:add', async (event): Promise<SourceFolder[]> => {
+    // Attach the dialog to the window that made the request (sheet on macOS).
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const result = win
+      ? await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
+      : await dialog.showOpenDialog({ properties: ['openDirectory'] })
     if (result.canceled || result.filePaths.length === 0) {
       return listFolders()
     }
