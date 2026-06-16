@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { registerFolderHandlers } from './folders'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -38,6 +39,8 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.mjs'),
     },
   })
+
+  registerFolderHandlers(win)
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {

@@ -2,6 +2,8 @@ export type SourceFolder = {
   path: string;
   label: string;
   pdfCount: number;
+  /** Whether the folder is currently readable on disk. Computed on each list, never persisted. */
+  accessible: boolean;
 };
 
 export type Chunk = {

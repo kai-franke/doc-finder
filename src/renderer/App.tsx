@@ -1,4 +1,23 @@
+import { useEffect, useState } from 'react'
+import type { SourceFolder } from '../shared/types'
+import FolderList from './components/FolderList'
+
 function App(): React.JSX.Element {
+  const [folders, setFolders] = useState<SourceFolder[]>([])
+
+  // Restore persisted folders on app start.
+  useEffect(() => {
+    window.api.folders.list().then(setFolders)
+  }, [])
+
+  async function handleAddFolder() {
+    setFolders(await window.api.folders.add())
+  }
+
+  async function handleRemoveFolder(folderPath: string) {
+    setFolders(await window.api.folders.remove(folderPath))
+  }
+
   return (
     <div className="flex h-full min-h-[520px] min-w-[760px] flex-col overflow-hidden bg-[#f5f5f7] text-[#1d1d1f]">
       <header
@@ -20,12 +39,9 @@ function App(): React.JSX.Element {
             <h2 className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.06em] text-[#aeaeb2]">
               Source Folders
             </h2>
-            <div className="flex flex-col gap-1" aria-label="Folder list placeholder">
-              <div className="rounded-md px-2 py-[7px] text-xs leading-snug text-[#aeaeb2]">
-                No folders added yet
-              </div>
-            </div>
+            <FolderList folders={folders} onRemove={handleRemoveFolder} />
             <button
+              onClick={handleAddFolder}
               className="app-no-drag mt-2 flex w-full cursor-default items-center justify-center gap-1.5 rounded-md border border-dashed border-black/14 bg-transparent px-2 py-1.5 text-[12.5px] text-[#0071e3] transition hover:border-[#0071e3] hover:bg-[#0071e3]/8"
               type="button"
             >

@@ -7,10 +7,13 @@
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "preview": "vite preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
+    "electron-store": "^11.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwindcss": "^4.3.0"
@@ -29,7 +32,8 @@
     "typescript": "^5.2.2",
     "vite": "^8.0.14",
     "vite-plugin-electron": "^0.29.1",
-    "vite-plugin-electron-renderer": "^0.14.7"
+    "vite-plugin-electron-renderer": "^0.14.7",
+    "vitest": "^3.2.6"
   },
   "main": "dist-electron/index.js"
 }
