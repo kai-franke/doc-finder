@@ -4,12 +4,17 @@ import Store from 'electron-store'
 import type { SourceFolder } from '../shared/types'
 import { countPdfsRecursively, deriveLabel, normalizePath } from './folder-utils'
 
+type StoredFolder = {
+  path: string
+  pdfCount: number
+}
+
 type FolderStore = {
-  folderPaths: string[]
+  folders: StoredFolder[]
 }
 
 const store = new Store<FolderStore>({
-  defaults: { folderPaths: [] },
+  defaults: { folders: [] },
 })
 
 // --------- Store-backed operations ---------
@@ -23,37 +28,39 @@ async function isAccessible(folderPath: string): Promise<boolean> {
   }
 }
 
-/** Builds the full SourceFolder list from stored paths, computing fresh metadata in parallel. */
+/**
+ * Builds the SourceFolder list from the store. The PDF count is read from the
+ * store (computed once on add), so this only refreshes the cheap `accessible`
+ * flag instead of re-scanning every folder on disk.
+ */
 async function listFolders(): Promise<SourceFolder[]> {
-  const folderPaths = store.get('folderPaths')
+  const folders = store.get('folders')
   return Promise.all(
-    folderPaths.map(async (folderPath) => {
-      const accessible = await isAccessible(folderPath)
-      return {
-        path: folderPath,
-        label: deriveLabel(folderPath),
-        pdfCount: accessible ? await countPdfsRecursively(folderPath) : 0,
-        accessible,
-      }
-    }),
+    folders.map(async ({ path: folderPath, pdfCount }) => ({
+      path: folderPath,
+      label: deriveLabel(folderPath),
+      pdfCount,
+      accessible: await isAccessible(folderPath),
+    })),
   )
 }
 
 async function addFolder(folderPath: string): Promise<SourceFolder[]> {
-  const folderPaths = store.get('folderPaths')
+  const folders = store.get('folders')
   const normalized = normalizePath(folderPath)
-  const isDuplicate = folderPaths.some((p) => normalizePath(p) === normalized)
+  const isDuplicate = folders.some((f) => normalizePath(f.path) === normalized)
   if (!isDuplicate) {
-    store.set('folderPaths', [...folderPaths, folderPath])
+    const pdfCount = await countPdfsRecursively(folderPath)
+    store.set('folders', [...folders, { path: folderPath, pdfCount }])
   }
   return listFolders()
 }
 
 async function removeFolder(folderPath: string): Promise<SourceFolder[]> {
-  const folderPaths = store.get('folderPaths')
+  const folders = store.get('folders')
   store.set(
-    'folderPaths',
-    folderPaths.filter((p) => p !== folderPath),
+    'folders',
+    folders.filter((f) => f.path !== folderPath),
   )
   return listFolders()
 }

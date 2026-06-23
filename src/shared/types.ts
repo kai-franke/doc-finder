@@ -1,7 +1,8 @@
 export type SourceFolder = {
   path: string;
-  label: string;
+  /** Number of PDFs, counted recursively once when the folder is added and then persisted. */
   pdfCount: number;
+  label: string;
   /** Whether the folder is currently readable on disk. Computed on each list, never persisted. */
   accessible: boolean;
 };
