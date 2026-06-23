@@ -1,7 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { registerFolderHandlers } from './folders'
+import { registerFolderHandlers, recountPendingFolders } from './folders'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -76,4 +76,8 @@ app.whenReady().then(() => {
   // can run again on `activate`, and ipcMain.handle throws on a second register.
   registerFolderHandlers()
   createWindow()
+  // Zählungen fortsetzen, die beim letzten Beenden der App unterbrochen wurden.
+  // Läuft erst nach createWindow, damit es schon ein Fenster gibt, an das das
+  // Ergebnis geschickt werden kann.
+  recountPendingFolders()
 })

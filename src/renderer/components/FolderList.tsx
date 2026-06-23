@@ -32,12 +32,20 @@ function FolderList({ folders, onRemove }: FolderListProps): React.JSX.Element {
             >
               {folder.label}
             </span>
-            {folder.accessible ? (
+            {!folder.accessible ? (
+              <span className="text-[11px] text-[#ff3b30]">Folder not found</span>
+            ) : folder.pdfCount === null ? (
+              <span className="flex items-center gap-1.5 text-[11px] text-[#aeaeb2]">
+                <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+                Zähle PDFs…
+              </span>
+            ) : (
               <span className="text-[11px] text-[#aeaeb2]">
                 {folder.pdfCount} {folder.pdfCount === 1 ? 'PDF' : 'PDFs'}
               </span>
-            ) : (
-              <span className="text-[11px] text-[#ff3b30]">Folder not found</span>
             )}
           </div>
           <button
