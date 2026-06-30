@@ -5,9 +5,13 @@ import FolderList from './components/FolderList'
 function App(): React.JSX.Element {
   const [folders, setFolders] = useState<SourceFolder[]>([])
 
-  // Restore persisted folders on app start.
+  // Beim Start der App die gespeicherten Ordner laden und zusätzlich auf
+  // Hintergrund-Aktualisierungen horchen (z. B. wenn eine PDF-Zählung im
+  // Hauptprozess fertig geworden ist).
   useEffect(() => {
     window.api.folders.list().then(setFolders)
+    const unsubscribe = window.api.folders.onChanged(setFolders)
+    return unsubscribe
   }, [])
 
   async function handleAddFolder() {

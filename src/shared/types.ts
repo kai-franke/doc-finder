@@ -1,7 +1,13 @@
 export type SourceFolder = {
   path: string;
+  /**
+   * Anzahl der PDFs, die im Hintergrund (inklusive aller Unterordner) gezählt
+   * wird. `null` bedeutet: Die Zählung läuft noch – dann zeigt die Oberfläche
+   * eine Lade-Anzeige. Der Wert wird gespeichert; eine unterbrochene Zählung
+   * übersteht so einen Neustart und wird beim nächsten Start erneut durchgeführt.
+   */
+  pdfCount: number | null;
   label: string;
-  pdfCount: number;
   /** Whether the folder is currently readable on disk. Computed on each list, never persisted. */
   accessible: boolean;
 };
