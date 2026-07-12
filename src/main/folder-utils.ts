@@ -1,6 +1,17 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
+export type PdfDiscoveryError = {
+  path: string;
+  message: string;
+};
+
+export type PdfDiscoveryOptions = {
+  signal?: AbortSignal;
+  onDirectoryScanned?: (pdfsFound: number) => void;
+  onError?: (error: PdfDiscoveryError) => void;
+};
+
 // Pure, electron-free folder helpers. Kept separate from folders.ts so they can be
 // unit-tested in a plain Node environment without loading electron / electron-store.
 
@@ -15,6 +26,79 @@ export function deriveLabel(folderPath: string): string {
  */
 export function normalizePath(folderPath: string): string {
   return path.resolve(folderPath).toLowerCase();
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw signal.reason instanceof Error
+      ? signal.reason
+      : new DOMException("PDF discovery was aborted", "AbortError");
+  }
+}
+
+/**
+ * Removes duplicate and nested roots. If both `/Docs` and `/Docs/PDFs` are
+ * registered, traversing `/Docs` already covers the latter. This prevents
+ * duplicate work without retaining every discovered file path in memory.
+ */
+export function minimizeRootPaths(rootPaths: string[]): string[] {
+  const unique = new Map<string, string>();
+  for (const root of rootPaths) {
+    unique.set(normalizePath(root), path.resolve(root));
+  }
+
+  return [...unique.entries()]
+    .sort(([a], [b]) => a.length - b.length)
+    .filter(([candidate], index, entries) =>
+      !entries.slice(0, index).some(([parent]) => {
+        const relative = path.relative(parent, candidate);
+        return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
+      }),
+    )
+    .map(([, original]) => original);
+}
+
+/**
+ * Discovers PDFs lazily and iteratively. Directories are read one at a time to
+ * keep filesystem pressure predictable even when a user selects a disk root.
+ * Symbolic links are deliberately not followed, avoiding cycles and scans that
+ * unexpectedly leave the selected tree.
+ */
+export async function* discoverPdfsRecursively(
+  rootPaths: string[],
+  options: PdfDiscoveryOptions = {},
+): AsyncGenerator<string> {
+  const directories = minimizeRootPaths(rootPaths).reverse();
+  let pdfsFound = 0;
+
+  while (directories.length > 0) {
+    throwIfAborted(options.signal);
+    const current = directories.pop();
+    if (!current) continue;
+
+    let entries;
+    try {
+      entries = await fs.readdir(current, { withFileTypes: true });
+    } catch (error) {
+      options.onError?.({
+        path: current,
+        message: error instanceof Error ? error.message : "Directory could not be read",
+      });
+      continue;
+    }
+
+    for (const entry of entries) {
+      throwIfAborted(options.signal);
+      const entryPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        directories.push(entryPath);
+      } else if (entry.isFile() && entry.name.toLowerCase().endsWith(".pdf")) {
+        pdfsFound += 1;
+        yield entryPath;
+      }
+    }
+    options.onDirectoryScanned?.(pdfsFound);
+  }
 }
 
 /**

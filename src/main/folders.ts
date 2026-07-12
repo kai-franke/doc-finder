@@ -25,6 +25,11 @@ const counting = new Set<string>()
 
 // --------- Store-backed operations ---------
 
+/** Main-process access to the source roots persisted by folder management. */
+export function getRegisteredFolderPaths(): string[] {
+  return store.get('folders').map(({ path: folderPath }) => folderPath)
+}
+
 async function isAccessible(folderPath: string): Promise<boolean> {
   try {
     await fs.access(folderPath)

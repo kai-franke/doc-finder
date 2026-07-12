@@ -2,7 +2,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { countPdfsRecursively, deriveLabel, normalizePath } from './folder-utils'
+import {
+  countPdfsRecursively,
+  deriveLabel,
+  discoverPdfsRecursively,
+  minimizeRootPaths,
+  normalizePath,
+} from './folder-utils'
 
 describe('deriveLabel', () => {
   it('returns the last path segment', () => {
@@ -75,5 +81,58 @@ describe('countPdfsRecursively', () => {
     expect(await countPdfsRecursively(wide, 1)).toBe(expected) // auch bei nur 1 Ordner gleichzeitig korrekt
 
     await fs.rm(wide, { recursive: true, force: true })
+  })
+})
+
+describe('minimizeRootPaths', () => {
+  it('removes duplicate and nested roots', () => {
+    expect(minimizeRootPaths([
+      '/Users/me/Documents/PDFs',
+      '/Users/me/Documents',
+      '/Users/me/Documents',
+    ])).toEqual(['/Users/me/Documents'])
+  })
+})
+
+describe('discoverPdfsRecursively', () => {
+  it('streams PDFs from multiple roots and ignores symbolic links', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'docfinder-discovery-'))
+    const other = await fs.mkdtemp(path.join(os.tmpdir(), 'docfinder-discovery-'))
+    await fs.mkdir(path.join(root, 'nested'))
+    await fs.writeFile(path.join(root, 'nested', 'one.PDF'), '')
+    await fs.writeFile(path.join(root, 'ignore.txt'), '')
+    await fs.writeFile(path.join(other, 'two.pdf'), '')
+    await fs.symlink(other, path.join(root, 'linked'))
+
+    const found: string[] = []
+    for await (const file of discoverPdfsRecursively([root, path.join(root, 'nested'), other])) {
+      found.push(file)
+    }
+
+    expect(found.sort()).toEqual([
+      path.join(root, 'nested', 'one.PDF'),
+      path.join(other, 'two.pdf'),
+    ].sort())
+    await fs.rm(root, { recursive: true, force: true })
+    await fs.rm(other, { recursive: true, force: true })
+  })
+
+  it('reports unreadable roots without stopping the scan', async () => {
+    const errors: string[] = []
+    const found: string[] = []
+    for await (const file of discoverPdfsRecursively(['/definitely/missing'], {
+      onError: ({ path: failedPath }) => errors.push(failedPath),
+    })) {
+      found.push(file)
+    }
+    expect(found).toEqual([])
+    expect(errors).toEqual(['/definitely/missing'])
+  })
+
+  it('can be aborted', async () => {
+    const controller = new AbortController()
+    controller.abort()
+    const iterator = discoverPdfsRecursively(['/'], { signal: controller.signal })
+    await expect(iterator.next()).rejects.toMatchObject({ name: 'AbortError' })
   })
 })
