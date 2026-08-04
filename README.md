@@ -33,7 +33,7 @@ Everything runs locally using [Ollama](https://ollama.com) and [LanceDB](https:/
  
 Before running DocFinder, make sure you have the following installed:
  
-- **Node.js** v18 or higher — [nodejs.org](https://nodejs.org)
+- **Node.js** v24 (the exact development version is recorded in `.nvmrc`) — [nodejs.org](https://nodejs.org)
 - **Ollama** — [ollama.com](https://ollama.com)
 After installing Ollama, pull the embedding model:
  
