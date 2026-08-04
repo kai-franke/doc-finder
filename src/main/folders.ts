@@ -25,6 +25,14 @@ const counting = new Set<string>()
 
 // --------- Store-backed operations ---------
 
+/**
+ * Returns the registered paths exactly as stored. PDF scans derive their
+ * temporary effective roots from this list, but never rewrite it.
+ */
+export function getRegisteredFolderPaths(): string[] {
+  return store.get('folders').map((folder) => folder.path)
+}
+
 async function isAccessible(folderPath: string): Promise<boolean> {
   try {
     await fs.access(folderPath)
