@@ -2,7 +2,7 @@ import { ipcMain, dialog, BrowserWindow } from 'electron'
 import { promises as fs } from 'node:fs'
 import Store from 'electron-store'
 import type { SourceFolder } from '../shared/types'
-import { countPdfsRecursively, deriveLabel, normalizePath } from './folder-utils'
+import { deriveLabel, normalizePath } from './folder-utils'
 
 type StoredFolder = {
   path: string
@@ -17,11 +17,7 @@ const store = new Store<FolderStore>({
   defaults: { folders: [] },
 })
 
-// Hier merken wir uns, für welche Ordner gerade im Hintergrund gezählt wird.
-// Diese Merkliste lebt nur im Arbeitsspeicher (wird nicht dauerhaft gespeichert)
-// und verhindert, dass derselbe Ordner versehentlich zweimal gleichzeitig
-// gezählt wird.
-const counting = new Set<string>()
+let inventoryRefresh: (() => void) | undefined
 
 // --------- Store-backed operations ---------
 
@@ -60,7 +56,7 @@ async function listFolders(): Promise<SourceFolder[]> {
 }
 
 /** Schickt die aktuelle Ordnerliste an alle geöffneten Fenster. */
-async function broadcastFolders(): Promise<void> {
+export async function broadcastFolders(): Promise<void> {
   const list = await listFolders()
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) {
@@ -69,33 +65,20 @@ async function broadcastFolders(): Promise<void> {
   }
 }
 
-/**
- * Zählt die PDFs eines Ordners im Hintergrund, ohne dass der Rest der App darauf
- * warten muss. Sobald die Zählung fertig ist, wird das Ergebnis gespeichert und
- * die aktualisierte Liste an die Oberfläche geschickt. Ordner, für die bereits
- * gezählt wird, werden übersprungen.
- */
-async function countInBackground(folderPath: string): Promise<void> {
-  const normalized = normalizePath(folderPath)
-  if (counting.has(normalized)) return
-  counting.add(normalized)
-  try {
-    const pdfCount = await countPdfsRecursively(folderPath)
-    // Liste neu einlesen: Der Ordner könnte während des Zählens entfernt worden
-    // sein – dann findet die Aktualisierung ihn nicht mehr und es passiert nichts.
-    const folders = store.get('folders')
-    store.set(
-      'folders',
-      folders.map((f) => (normalizePath(f.path) === normalized ? { ...f, pdfCount } : f)),
-    )
-  } catch {
-    // countPdfsRecursively fängt eigene Fehler bereits selbst ab. Dieses catch
-    // ist nur zur Sicherheit da, damit eine spätere Änderung an der Zählung nicht
-    // unbemerkt zu einem abstürzenden Hintergrund-Vorgang führen kann.
-  } finally {
-    counting.delete(normalized)
-    await broadcastFolders()
-  }
+export function setFolderInventoryRefresh(refresh: () => void): void {
+  inventoryRefresh = refresh
+}
+
+export async function updateFolderPdfCounts(counts: ReadonlyMap<string, number>): Promise<void> {
+  const folders = store.get('folders')
+  store.set(
+    'folders',
+    folders.map((folder) => ({
+      ...folder,
+      pdfCount: counts.get(normalizePath(folder.path)) ?? folder.pdfCount,
+    })),
+  )
+  await broadcastFolders()
 }
 
 async function addFolder(folderPath: string): Promise<SourceFolder[]> {
@@ -107,26 +90,23 @@ async function addFolder(folderPath: string): Promise<SourceFolder[]> {
     // (mit Lade-Anzeige) in der Liste erscheint. Das eigentliche Zählen läuft
     // danach im Hintergrund.
     store.set('folders', [...folders, { path: folderPath, pdfCount: null }])
-    void countInBackground(folderPath)
+    inventoryRefresh?.()
   }
   return listFolders()
 }
 
 /** Zählt Ordner erneut, deren Zählung nie fertig wurde (z. B. weil die App vorher beendet wurde). */
 export function recountPendingFolders(): void {
-  for (const folder of store.get('folders')) {
-    if (folder.pdfCount === null) {
-      void countInBackground(folder.path)
-    }
-  }
+  if (store.get('folders').some((folder) => folder.pdfCount === null)) inventoryRefresh?.()
 }
 
 async function removeFolder(folderPath: string): Promise<SourceFolder[]> {
   const folders = store.get('folders')
   store.set(
     'folders',
-    folders.filter((f) => f.path !== folderPath),
+    folders.filter((f) => normalizePath(f.path) !== normalizePath(folderPath)),
   )
+  inventoryRefresh?.()
   return listFolders()
 }
 
