@@ -15,6 +15,7 @@ import { registerSearchHandlers } from './search-ipc'
 import { registerFileHandlers } from './file-ipc'
 import { registerOllamaHandlers } from './ollama-ipc'
 import { OllamaManager } from './ollama-manager'
+import { configureLogger, flushLogs, logError } from './logger'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -89,6 +90,9 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(() => {
+  configureLogger(path.join(app.getPath('userData'), 'logs'), { mirrorToConsole: !app.isPackaged })
+  process.on('uncaughtExceptionMonitor', (error) => logError('uncaught-exception', error))
+  process.on('unhandledRejection', (error) => logError('unhandled-rejection', error))
   // Register IPC handlers once, decoupled from window creation — createWindow
   // can run again on `activate`, and ipcMain.handle throws on a second register.
   indexServices = createIndexServices(app.getPath('userData'))
@@ -111,8 +115,8 @@ app.whenReady().then(() => {
   // Läuft erst nach createWindow, damit es schon ein Fenster gibt, an das das
   // Ergebnis geschickt werden kann.
   recountPendingFolders()
-  void indexCoordinator.scan()
-  void ollamaManager.initialize()
+  void indexCoordinator.scan().catch((error) => logError('startup-scan', error))
+  void ollamaManager.initialize().catch((error) => logError('startup-ollama', error))
 })
 
 app.on('before-quit', (event) => {
@@ -120,5 +124,10 @@ app.on('before-quit', (event) => {
   event.preventDefault()
   isQuitting = true
   indexCoordinator?.abort()
-  void Promise.all([ollamaManager?.stop(), indexServices?.close()]).finally(() => app.quit())
+  void Promise.all([ollamaManager?.stop(), indexServices?.close()])
+    .catch((error) => logError('shutdown', error))
+    .finally(async () => {
+      await flushLogs()
+      app.quit()
+    })
 })

@@ -5,6 +5,7 @@ import path from 'node:path'
 import type { PdfBufferParser } from './pdf-extractor'
 import {
   collectChunks,
+  processPdfFiles,
   processRegisteredPdfs,
   type PdfProcessingEvent,
 } from './pdf-processing'
@@ -120,4 +121,20 @@ describe('PDF processing pipeline', () => {
     const events = processRegisteredPdfs([root], { concurrency: 0 })
     await expect(events.next()).rejects.toThrow(RangeError)
   })
+
+  it('processes a large folder with 500 PDFs without retaining file buffers', async () => {
+    const paths = await Promise.all(
+      Array.from({ length: 500 }, (_, index) => addPdf(`large-${index}.pdf`, `document ${index}`)),
+    )
+    const parser: PdfBufferParser = async (buffer) => ({
+      pages: [{ page: 1, text: buffer.toString() }],
+    })
+    let processed = 0
+
+    for await (const event of processPdfFiles(paths, { concurrency: 4, parser })) {
+      if (event.type === 'processed') processed += 1
+    }
+
+    expect(processed).toBe(500)
+  }, 10_000)
 })

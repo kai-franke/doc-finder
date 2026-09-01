@@ -63,6 +63,44 @@ describe('IndexCoordinator', () => {
       deletedFiles: [],
     })
   })
+
+  it('reports parser failures without exposing technical details', async () => {
+    const manifest: IndexManifest = {
+      schemaVersion: 1,
+      model: 'nomic-embed-text',
+      vectorDimension: null,
+      lastUpdated: null,
+      files: {},
+    }
+    const inventory: FileInventory = {
+      files: new Map([['/docs/protected.pdf', 2]]),
+      folderCounts: new Map([['/docs', 1]]),
+      errors: [],
+    }
+    async function* processFiles(): AsyncGenerator<PdfProcessingEvent> {
+      yield {
+        type: 'error',
+        filePath: '/docs/protected.pdf',
+        stage: 'parse',
+        message: 'PasswordException: owner password required',
+      }
+    }
+    const coordinator = new IndexCoordinator({
+      vectorIndex: { manifest: async () => manifest, removeFile: async () => undefined },
+      documentIndexer: { indexFile: vi.fn() },
+      getFolderPaths: () => ['/docs'],
+      scanInventory: async () => inventory,
+      updateFolderCounts: async () => undefined,
+      processFiles,
+    })
+
+    const result = await coordinator.start()
+
+    expect(result.errors).toEqual([{
+      filePath: '/docs/protected.pdf',
+      message: 'This PDF could not be read. It may be damaged or password-protected.',
+    }])
+  })
 })
 
 function indexedFile(filePath: string, modifiedAt: number): IndexedFile {

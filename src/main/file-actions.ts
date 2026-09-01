@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs'
 import { shell } from 'electron'
 import type { FileActionResult } from '../shared/types'
+import { logError } from './logger'
 
 export type FileActionDependencies = {
   isFile?: (filePath: string) => Promise<boolean>
@@ -31,7 +32,7 @@ export class FileActions {
       }
       return null
     } catch (error) {
-      console.error(`Could not access PDF ${filePath}:`, error)
+      logError('file-access', error, { filePath })
       return { ok: false, message: 'This PDF is no longer available.' }
     }
   }
@@ -42,12 +43,12 @@ export class FileActions {
     try {
       const errorMessage = await this.openPath(filePath)
       if (errorMessage) {
-        console.error(`Could not open PDF ${filePath}: ${errorMessage}`)
+        logError('file-open', errorMessage, { filePath })
         return { ok: false, message: 'The PDF could not be opened.' }
       }
       return { ok: true }
     } catch (error) {
-      console.error(`Could not open PDF ${filePath}:`, error)
+      logError('file-open', error, { filePath })
       return { ok: false, message: 'The PDF could not be opened.' }
     }
   }
@@ -59,7 +60,7 @@ export class FileActions {
       this.showItemInFolder(filePath)
       return { ok: true }
     } catch (error) {
-      console.error(`Could not reveal PDF ${filePath}:`, error)
+      logError('file-reveal', error, { filePath })
       return { ok: false, message: 'The PDF could not be shown in Finder.' }
     }
   }

@@ -3,6 +3,8 @@ import { promises as fs } from 'node:fs'
 import Store from 'electron-store'
 import type { SourceFolder } from '../shared/types'
 import { deriveLabel, normalizePath } from './folder-utils'
+import { logError } from './logger'
+import { userMessage } from './user-errors'
 
 type StoredFolder = {
   path: string
@@ -114,22 +116,40 @@ async function removeFolder(folderPath: string): Promise<SourceFolder[]> {
 
 export function registerFolderHandlers(): void {
   ipcMain.handle('folders:add', async (event): Promise<SourceFolder[]> => {
-    // Attach the dialog to the window that made the request (sheet on macOS).
-    const win = BrowserWindow.fromWebContents(event.sender)
-    const result = win
-      ? await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
-      : await dialog.showOpenDialog({ properties: ['openDirectory'] })
-    if (result.canceled || result.filePaths.length === 0) {
-      return listFolders()
+    try {
+      // Attach the dialog to the window that made the request (sheet on macOS).
+      const win = BrowserWindow.fromWebContents(event.sender)
+      const result = win
+        ? await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
+        : await dialog.showOpenDialog({ properties: ['openDirectory'] })
+      if (result.canceled || result.filePaths.length === 0) {
+        return listFolders()
+      }
+      return addFolder(result.filePaths[0])
+    } catch (error) {
+      logError('folder-add', error)
+      throw new Error(userMessage(error, 'folder'))
     }
-    return addFolder(result.filePaths[0])
   })
 
-  ipcMain.handle('folders:list', (): Promise<SourceFolder[]> => listFolders())
+  ipcMain.handle('folders:list', async (): Promise<SourceFolder[]> => {
+    try {
+      return await listFolders()
+    } catch (error) {
+      logError('folder-list', error)
+      throw new Error(userMessage(error, 'folder'))
+    }
+  })
 
   ipcMain.handle(
     'folders:remove',
-    (_event, { folderPath }: { folderPath: string }): Promise<SourceFolder[]> =>
-      removeFolder(folderPath),
+    async (_event, { folderPath }: { folderPath: string }): Promise<SourceFolder[]> => {
+      try {
+        return await removeFolder(folderPath)
+      } catch (error) {
+        logError('folder-remove', error, { folderPath })
+        throw new Error(userMessage(error, 'folder'))
+      }
+    },
   )
 }

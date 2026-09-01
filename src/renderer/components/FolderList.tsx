@@ -21,7 +21,7 @@ function FolderList({ folders, onRemove }: FolderListProps): React.JSX.Element {
       {folders.map((folder) => (
         <li
           key={folder.path}
-          className="group flex items-center gap-2 rounded-md px-2 py-[7px] transition hover:bg-black/5"
+          className="group flex items-center gap-2 rounded-md border border-transparent px-2 py-[7px] transition hover:border-black/8 hover:bg-white/45"
         >
           <div className="flex min-w-0 flex-1 flex-col">
             <span

@@ -29,7 +29,7 @@ function ResultCard({ result, onOpen, onShowInFinder }: ResultCardProps): React.
 
   return (
     <article
-      className="group rounded-xl border border-black/8 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-black/14 hover:shadow-[0_5px_16px_rgba(0,0,0,0.08)]"
+      className="result-card group rounded-xl border border-black/8 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-black/14 hover:shadow-[0_5px_16px_rgba(0,0,0,0.08)]"
       onClick={() => void run('open', onOpen)}
     >
       <div className="flex items-start gap-3">
