@@ -34,3 +34,31 @@ export type ScanResult = {
   changedFiles: string[];
   deletedFiles: string[];
 };
+
+export type IndexingProgress = {
+  current: number;
+  total: number;
+  fileName: string;
+  percent: number;
+};
+
+export type IndexingError = {
+  filePath: string;
+  message: string;
+};
+
+export type IndexingResult = {
+  indexed: number;
+  deleted: number;
+  errors: IndexingError[];
+  aborted: boolean;
+};
+
+export type IndexStatus = {
+  isScanning: boolean;
+  isIndexing: boolean;
+  scanResult: ScanResult;
+  indexedDocuments: number;
+  lastUpdated: number | null;
+  progress: IndexingProgress | null;
+};

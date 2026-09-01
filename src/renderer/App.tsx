@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
-import type { SourceFolder } from '../shared/types'
+import type { IndexStatus, IndexingError, IndexingResult, SourceFolder } from '../shared/types'
 import FolderList from './components/FolderList'
+import IndexStatusPanel from './components/IndexStatusPanel'
 
 function App(): React.JSX.Element {
   const [folders, setFolders] = useState<SourceFolder[]>([])
+  const [indexStatus, setIndexStatus] = useState<IndexStatus | null>(null)
+  const [indexResult, setIndexResult] = useState<IndexingResult | null>(null)
+  const [indexErrors, setIndexErrors] = useState<IndexingError[]>([])
 
   // Beim Start der App die gespeicherten Ordner laden und zusätzlich auf
   // Hintergrund-Aktualisierungen horchen (z. B. wenn eine PDF-Zählung im
@@ -14,12 +18,32 @@ function App(): React.JSX.Element {
     return unsubscribe
   }, [])
 
+  useEffect(() => {
+    window.api.index.getStatus().then(setIndexStatus)
+    const unsubscribers = [
+      window.api.index.onStatus(setIndexStatus),
+      window.api.index.onComplete(setIndexResult),
+      window.api.index.onError((error) => setIndexErrors((current) => [...current, error])),
+    ]
+    return () => unsubscribers.forEach((unsubscribe) => unsubscribe())
+  }, [])
+
   async function handleAddFolder() {
     setFolders(await window.api.folders.add())
   }
 
   async function handleRemoveFolder(folderPath: string) {
     setFolders(await window.api.folders.remove(folderPath))
+  }
+
+  async function handleStartIndexing() {
+    setIndexResult(null)
+    setIndexErrors([])
+    await window.api.index.start()
+  }
+
+  function handleAbortIndexing() {
+    void window.api.index.abort()
   }
 
   return (
@@ -57,19 +81,13 @@ function App(): React.JSX.Element {
           </section>
 
           <section className="mt-auto border-t border-black/8 p-3" aria-label="Index and Ollama status">
-            <div className="mb-2.5 flex items-start gap-[7px]">
-              <span className="mt-1 h-[7px] w-[7px] shrink-0 rounded-full bg-[#ff9500]" aria-hidden="true" />
-              <p className="m-0 flex flex-1 flex-col gap-0.5 text-[11.5px] leading-snug text-[#6e6e73]">
-                No documents indexed
-                <span className="text-[#aeaeb2]">Index your folders to enable search</span>
-              </p>
-            </div>
-            <button
-              className="app-no-drag flex w-full cursor-default items-center justify-center rounded-md border-0 bg-[#0071e3] px-3 py-[7px] text-[12.5px] font-semibold text-white"
-              type="button"
-            >
-              Update index
-            </button>
+            <IndexStatusPanel
+              status={indexStatus}
+              lastResult={indexResult}
+              transientErrors={indexErrors}
+              onStart={handleStartIndexing}
+              onAbort={handleAbortIndexing}
+            />
             <div className="mt-2 flex items-center gap-[5px] text-[11px] text-[#aeaeb2]">
               <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#aeaeb2]" aria-hidden="true" />
               <span>Ollama status pending</span>

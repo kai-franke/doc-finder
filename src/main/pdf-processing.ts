@@ -124,6 +124,19 @@ export async function* processRegisteredPdfs(
     yield event
   }
 
+  yield* processPdfFiles(pdfPaths, options)
+}
+
+/** Processes an already discovered set of PDFs, used by incremental indexing. */
+export async function* processPdfFiles(
+  pdfPaths: readonly string[],
+  options: PdfProcessingOptions = {},
+): AsyncGenerator<PdfProcessingEvent> {
+  const concurrency = options.concurrency ?? 2
+  assertConcurrency(concurrency)
+  if (options.signal?.aborted) return
+
+  const logger = options.logger ?? defaultLogger
   const parser = options.parser ?? parsePdfBuffer
   let nextFileIndex = 0
   let nextTaskId = 0

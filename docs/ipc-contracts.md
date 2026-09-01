@@ -1,15 +1,19 @@
 # IPC overview
 
 ```ts
-// Indexing
-'indexing:start'      → void
-'indexing:progress'   → { current: number; total: number; fileName: string }
-'indexing:complete'   → { indexed: number; errors: string[] }
-'indexing:error'      → { filePath: string; message: string }
+// Indexing (invoke)
+'index:status'        → IndexStatus
+'indexing:start'      → IndexingResult
 'indexing:abort'      → void
 
+// Indexing (Main → Renderer events)
+'index:statusChanged' → IndexStatus
+'indexing:progress'   → IndexingProgress
+'indexing:complete'   → IndexingResult
+'indexing:error'      → IndexingError
+
 // Change detection
-'index:scan'          → void
+'index:scan'          → ScanResult
 'index:scanResult'    → ScanResult
 
 // Search
@@ -28,3 +32,8 @@
 // Ollama
 'ollama:status'       → { running: boolean; message?: string }
 ```
+
+All payload types are exported from `src/shared/types.ts`. `IndexingProgress`
+contains `current`, `total`, `fileName`, and a rounded `percent`. An
+`IndexingResult` reports indexed and deleted document counts, per-file errors,
+and whether the operation was aborted.

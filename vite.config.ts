@@ -12,6 +12,15 @@ export default defineConfig({
     electron({
       main: {
         entry: "src/main/index.ts",
+        // LanceDB ships a platform-specific native Node module. Keep it as a
+        // runtime dependency instead of asking Rolldown to parse the .node file.
+        vite: {
+          build: {
+            rollupOptions: {
+              external: ["@lancedb/lancedb", "apache-arrow"],
+            },
+          },
+        },
       },
       preload: {
         input: path.join(__dirname, "src/main/preload.ts"),
