@@ -35,4 +35,42 @@ describe('OllamaClient', () => {
 
     await expect(client.embed(['first', 'second'])).rejects.toThrow('invalid embedding vector')
   })
+
+  it('lists locally installed models', async () => {
+    const client = new OllamaClient({
+      fetchImpl: async () =>
+        new Response(JSON.stringify({
+          models: [{ name: 'llama3.2:latest' }, { model: 'nomic-embed-text:latest' }],
+        })),
+    })
+
+    await expect(client.listModels()).resolves.toEqual([
+      'llama3.2:latest',
+      'nomic-embed-text:latest',
+    ])
+  })
+
+  it('streams model download progress', async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async (_input, init) => {
+      expect(JSON.parse(String(init?.body))).toEqual({
+        model: 'nomic-embed-text',
+        stream: true,
+      })
+      return new Response([
+        JSON.stringify({ status: 'pulling manifest' }),
+        JSON.stringify({ status: 'downloading', completed: 50, total: 100 }),
+        JSON.stringify({ status: 'success', completed: 100, total: 100 }),
+      ].join('\n'))
+    })
+    const client = new OllamaClient({ fetchImpl })
+    const updates: Array<{ status: string; percent?: number }> = []
+
+    await client.pullModel((progress) => updates.push(progress))
+
+    expect(updates).toEqual([
+      { status: 'pulling manifest' },
+      { status: 'downloading', completed: 50, total: 100, percent: 50 },
+      { status: 'success', completed: 100, total: 100, percent: 100 },
+    ])
+  })
 })

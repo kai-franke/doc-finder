@@ -8,6 +8,7 @@ import type {
 } from '../shared/types'
 import FolderList from './components/FolderList'
 import IndexStatusPanel from './components/IndexStatusPanel'
+import OllamaStatusPanel from './components/OllamaStatusPanel'
 import ResultList from './components/ResultList'
 import SearchBar from './components/SearchBar'
 
@@ -119,10 +120,7 @@ function App(): React.JSX.Element {
               onStart={handleStartIndexing}
               onAbort={handleAbortIndexing}
             />
-            <div className="mt-2 flex items-center gap-[5px] text-[11px] text-[#aeaeb2]">
-              <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#aeaeb2]" aria-hidden="true" />
-              <span>Ollama status pending</span>
-            </div>
+            <OllamaStatusPanel />
           </section>
         </aside>
 

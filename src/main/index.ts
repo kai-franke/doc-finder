@@ -13,6 +13,8 @@ import { registerIndexHandlers } from './index-ipc'
 import { createIndexServices, type IndexServices } from './index-services'
 import { registerSearchHandlers } from './search-ipc'
 import { registerFileHandlers } from './file-ipc'
+import { registerOllamaHandlers } from './ollama-ipc'
+import { OllamaManager } from './ollama-manager'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -37,6 +39,8 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win: BrowserWindow | null
 let indexServices: IndexServices | undefined
 let indexCoordinator: IndexCoordinator | undefined
+let ollamaManager: OllamaManager | undefined
+let isQuitting = false
 
 function createWindow() {
   win = new BrowserWindow({
@@ -93,6 +97,7 @@ app.whenReady().then(() => {
     getFolderPaths: getRegisteredFolderPaths,
     updateFolderCounts: updateFolderPdfCounts,
   })
+  ollamaManager = new OllamaManager(indexServices.ollama)
   setFolderInventoryRefresh(() => {
     void indexCoordinator?.scan()
   })
@@ -100,15 +105,20 @@ app.whenReady().then(() => {
   registerIndexHandlers(indexCoordinator)
   registerSearchHandlers(indexServices.searchService)
   registerFileHandlers()
+  registerOllamaHandlers(ollamaManager)
   createWindow()
   // Zählungen fortsetzen, die beim letzten Beenden der App unterbrochen wurden.
   // Läuft erst nach createWindow, damit es schon ein Fenster gibt, an das das
   // Ergebnis geschickt werden kann.
   recountPendingFolders()
   void indexCoordinator.scan()
+  void ollamaManager.initialize()
 })
 
-app.on('will-quit', () => {
+app.on('before-quit', (event) => {
+  if (isQuitting) return
+  event.preventDefault()
+  isQuitting = true
   indexCoordinator?.abort()
-  void indexServices?.close()
+  void Promise.all([ollamaManager?.stop(), indexServices?.close()]).finally(() => app.quit())
 })
