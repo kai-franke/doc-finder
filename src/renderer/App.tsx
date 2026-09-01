@@ -1,13 +1,26 @@
-import { useEffect, useState } from 'react'
-import type { IndexStatus, IndexingError, IndexingResult, SourceFolder } from '../shared/types'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type {
+  IndexStatus,
+  IndexingError,
+  IndexingResult,
+  SearchResult,
+  SourceFolder,
+} from '../shared/types'
 import FolderList from './components/FolderList'
 import IndexStatusPanel from './components/IndexStatusPanel'
+import ResultList from './components/ResultList'
+import SearchBar from './components/SearchBar'
 
 function App(): React.JSX.Element {
   const [folders, setFolders] = useState<SourceFolder[]>([])
   const [indexStatus, setIndexStatus] = useState<IndexStatus | null>(null)
   const [indexResult, setIndexResult] = useState<IndexingResult | null>(null)
   const [indexErrors, setIndexErrors] = useState<IndexingError[]>([])
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<SearchResult[]>([])
+  const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
+  const searchRequest = useRef(0)
 
   // Beim Start der App die gespeicherten Ordner laden und zusätzlich auf
   // Hintergrund-Aktualisierungen horchen (z. B. wenn eine PDF-Zählung im
@@ -45,6 +58,24 @@ function App(): React.JSX.Element {
   function handleAbortIndexing() {
     void window.api.index.abort()
   }
+
+  const handleSearch = useCallback(async (searchQuery: string) => {
+    const request = searchRequest.current + 1
+    searchRequest.current = request
+    setSearching(true)
+    setSearchError(null)
+    try {
+      const nextResults = await window.api.search.query(searchQuery)
+      if (request === searchRequest.current) setResults(nextResults)
+    } catch (error) {
+      if (request === searchRequest.current) {
+        setResults([])
+        setSearchError(error instanceof Error ? error.message : 'Search could not be completed.')
+      }
+    } finally {
+      if (request === searchRequest.current) setSearching(false)
+    }
+  }, [])
 
   return (
     <div className="flex h-full min-h-[520px] min-w-[760px] flex-col overflow-hidden bg-[#f5f5f7] text-[#1d1d1f]">
@@ -97,38 +128,26 @@ function App(): React.JSX.Element {
 
         <section className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#f5f5f7]" aria-label="Search">
           <div className="shrink-0 px-5 pb-3 pt-4">
-            <label className="relative flex items-center">
-              <span className="pointer-events-none absolute left-3 text-[#aeaeb2]" aria-hidden="true">
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                  <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.6" />
-                  <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" strokeWidth="1.6" />
-                </svg>
-              </span>
-              <span className="sr-only">Search query</span>
-              <input
-                className="app-no-drag w-full rounded-[10px] border border-black/14 bg-white py-[9px] pl-9 pr-3 text-sm text-[#1d1d1f] opacity-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] outline-none placeholder:text-[#aeaeb2] disabled:opacity-100"
-                type="search"
-                placeholder="Search your PDFs"
-                disabled
-              />
-            </label>
+            <SearchBar
+              value={query}
+              disabled={indexStatus?.isIndexing ?? false}
+              loading={searching}
+              onChange={setQuery}
+              onSearch={handleSearch}
+            />
             <div className="mt-2 px-0.5 text-xs text-[#aeaeb2]">
-              <span>Search results will appear below</span>
+              <span>{results.length > 0 ? `${results.length} ${results.length === 1 ? 'result' : 'results'}` : 'Search results will appear below'}</span>
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col items-center justify-center p-10 text-center">
-            <div className="text-[#aeaeb2] opacity-60" aria-hidden="true">
-              <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-                <path d="M12 8h17l7 7v21a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.8" />
-                <path d="M29 8v7h7" stroke="currentColor" strokeWidth="1.8" />
-                <path d="M16 23h16M16 29h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </div>
-            <h1 className="mt-3 text-[15px] font-semibold text-[#6e6e73]">No search results yet</h1>
-            <p className="mt-2 max-w-[280px] text-[12.5px] leading-normal text-[#aeaeb2]">
-              Add source folders and update the index to start searching local PDFs.
-            </p>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <ResultList
+              query={query}
+              results={results}
+              loading={searching}
+              hasIndex={(indexStatus?.indexedDocuments ?? 0) > 0}
+              error={searchError}
+            />
           </div>
         </section>
       </main>
