@@ -2,12 +2,14 @@ import path from 'node:path'
 import { DocumentIndexer } from './document-indexer'
 import { IndexManifestStore } from './index-manifest'
 import { OllamaClient, type OllamaClientOptions } from './ollama-client'
+import { SearchService } from './search-service'
 import { VectorIndex } from './vector-index'
 
 export type IndexServices = {
   ollama: OllamaClient
   vectorIndex: VectorIndex
   documentIndexer: DocumentIndexer
+  searchService: SearchService
   close: () => Promise<void>
 }
 
@@ -23,10 +25,12 @@ export function createIndexServices(
     new IndexManifestStore(path.join(indexRoot, 'manifest.json'), ollama.model),
   )
   const documentIndexer = new DocumentIndexer(ollama, vectorIndex)
+  const searchService = new SearchService(ollama, vectorIndex)
   return {
     ollama,
     vectorIndex,
     documentIndexer,
+    searchService,
     close: () => vectorIndex.close(),
   }
 }

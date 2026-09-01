@@ -73,4 +73,15 @@ describe('VectorIndex', () => {
       'Embedding dimension changed',
     )
   })
+
+  it('finds the closest chunks with cosine distance', async () => {
+    await index.replaceFile(toIndexedFile('/docs/file.pdf', 100, 2), [
+      chunk(0, [1, 0, 0]),
+      chunk(1, [0, 1, 0]),
+    ])
+
+    const results = await index.search([1, 0, 0], 10)
+    expect(results).toHaveLength(2)
+    expect(results[0]).toMatchObject({ text: 'chunk 0', _distance: 0 })
+  })
 })
