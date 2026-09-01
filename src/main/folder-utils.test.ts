@@ -57,7 +57,10 @@ describe('countPdfsRecursively', () => {
     // sodass mehrere solcher Häppchen nacheinander abgearbeitet werden. Pro
     // Ordner liegt genau eine PDF => erwartete Gesamtzahl = Anzahl der Ordner.
     const wide = await fs.mkdtemp(path.join(os.tmpdir(), 'docfinder-wide-'))
-    const breadth = 12
+    // 8³ plus the intermediate levels gives us 585 folders/PDFs. This still
+    // exercises a 500+ document tree without spending most of the test timeout
+    // on creating almost two thousand fixture directories sequentially.
+    const breadth = 8
     const depth = 3
     let expected = 0
     async function build(dir: string, level: number): Promise<void> {
