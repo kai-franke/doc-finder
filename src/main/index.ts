@@ -12,6 +12,7 @@ import { IndexCoordinator } from './index-coordinator'
 import { registerIndexHandlers } from './index-ipc'
 import { createIndexServices, type IndexServices } from './index-services'
 import { registerSearchHandlers } from './search-ipc'
+import { registerFileHandlers } from './file-ipc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -98,6 +99,7 @@ app.whenReady().then(() => {
   registerFolderHandlers()
   registerIndexHandlers(indexCoordinator)
   registerSearchHandlers(indexServices.searchService)
+  registerFileHandlers()
   createWindow()
   // Zählungen fortsetzen, die beim letzten Beenden der App unterbrochen wurden.
   // Läuft erst nach createWindow, damit es schon ein Fenster gibt, an das das

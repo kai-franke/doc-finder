@@ -1,4 +1,4 @@
-import type { SearchResult } from '../../shared/types'
+import type { FileActionResult, SearchResult } from '../../shared/types'
 import ResultCard from './ResultCard'
 
 type ResultListProps = {
@@ -7,6 +7,8 @@ type ResultListProps = {
   loading: boolean
   hasIndex: boolean
   error: string | null
+  onOpen: (filePath: string) => Promise<FileActionResult>
+  onShowInFinder: (filePath: string) => Promise<FileActionResult>
 }
 
 function EmptyState({ title, description }: { title: string; description: string }): React.JSX.Element {
@@ -25,7 +27,15 @@ function EmptyState({ title, description }: { title: string; description: string
   )
 }
 
-function ResultList({ query, results, loading, hasIndex, error }: ResultListProps): React.JSX.Element {
+function ResultList({
+  query,
+  results,
+  loading,
+  hasIndex,
+  error,
+  onOpen,
+  onShowInFinder,
+}: ResultListProps): React.JSX.Element {
   if (error) return <EmptyState title="Search unavailable" description={error} />
   if (!hasIndex) {
     return <EmptyState title="Index empty" description="Please index your folders first." />
@@ -41,7 +51,14 @@ function ResultList({ query, results, loading, hasIndex, error }: ResultListProp
   }
   return (
     <div className="grid gap-2.5 p-5 pt-1" aria-label="Search results">
-      {results.map((result) => <ResultCard key={result.filePath} result={result} />)}
+      {results.map((result) => (
+        <ResultCard
+          key={result.filePath}
+          result={result}
+          onOpen={onOpen}
+          onShowInFinder={onShowInFinder}
+        />
+      ))}
     </div>
   )
 }

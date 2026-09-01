@@ -14,22 +14,29 @@ const result: SearchResult = {
   score: 0.91,
 }
 
+const fileActions = {
+  onOpen: async () => ({ ok: true }),
+  onShowInFinder: async () => ({ ok: true }),
+}
+
 describe('ResultList', () => {
   it('explains that folders must be indexed first', () => {
-    render(<ResultList query="" results={[]} loading={false} hasIndex={false} error={null} />)
+    render(<ResultList query="" results={[]} loading={false} hasIndex={false} error={null} {...fileActions} />)
     expect(screen.getByText('Index empty')).toBeTruthy()
     expect(screen.getByText('Please index your folders first.')).toBeTruthy()
   })
 
   it('shows the no-results state for a completed query', () => {
-    render(<ResultList query="missing" results={[]} loading={false} hasIndex error={null} />)
+    render(<ResultList query="missing" results={[]} loading={false} hasIndex error={null} {...fileActions} />)
     expect(screen.getByText('No documents found')).toBeTruthy()
   })
 
   it('renders result metadata and relevance', () => {
-    render(<ResultList query="invoice" results={[result]} loading={false} hasIndex error={null} />)
+    render(<ResultList query="invoice" results={[result]} loading={false} hasIndex error={null} {...fileActions} />)
     expect(screen.getByText('invoice.pdf')).toBeTruthy()
     expect(screen.getByText('An invoice for the vehicle repair.')).toBeTruthy()
     expect(screen.getByLabelText('91% relevance')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Open' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Show in Finder' })).toBeTruthy()
   })
 })

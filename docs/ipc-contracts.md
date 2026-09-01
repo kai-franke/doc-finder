@@ -26,8 +26,8 @@
 'folders:remove'      → { folderPath: string }
 
 // File actions
-'file:open'           → { filePath: string }
-'file:showInFinder'   → { filePath: string }
+'file:open'           → { filePath: string } → FileActionResult
+'file:showInFinder'   → { filePath: string } → FileActionResult
 
 // Ollama
 'ollama:status'       → { running: boolean; message?: string }

@@ -1,13 +1,37 @@
-import type { SearchResult } from '../../shared/types'
+import { useState } from 'react'
+import type { FileActionResult, SearchResult } from '../../shared/types'
 
 type ResultCardProps = {
   result: SearchResult
+  onOpen: (filePath: string) => Promise<FileActionResult>
+  onShowInFinder: (filePath: string) => Promise<FileActionResult>
 }
 
-function ResultCard({ result }: ResultCardProps): React.JSX.Element {
+function ResultCard({ result, onOpen, onShowInFinder }: ResultCardProps): React.JSX.Element {
   const percent = Math.round(result.score * 100)
+  const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState<'open' | 'finder' | null>(null)
+
+  const run = async (
+    action: 'open' | 'finder',
+    callback: (filePath: string) => Promise<FileActionResult>,
+  ): Promise<void> => {
+    if (pending) return
+    setPending(action)
+    setError(null)
+    const response = await callback(result.filePath).catch(() => ({
+      ok: false,
+      message: 'The file action could not be completed.',
+    }))
+    if (!response.ok) setError(response.message ?? 'The file action could not be completed.')
+    setPending(null)
+  }
+
   return (
-    <article className="group rounded-xl border border-black/8 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-black/14 hover:shadow-[0_5px_16px_rgba(0,0,0,0.08)]">
+    <article
+      className="group rounded-xl border border-black/8 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-black/14 hover:shadow-[0_5px_16px_rgba(0,0,0,0.08)]"
+      onClick={() => void run('open', onOpen)}
+    >
       <div className="flex items-start gap-3">
         <div className="flex h-9 w-8 shrink-0 items-center justify-center rounded-md bg-[#ff3b30]/10 text-[#ff3b30]" aria-hidden="true">
           <svg width="19" height="22" viewBox="0 0 19 22" fill="none">
@@ -27,6 +51,31 @@ function ResultCard({ result }: ResultCardProps): React.JSX.Element {
             </span>
           </div>
           <p className="mt-2 line-clamp-3 text-[12px] leading-relaxed text-[#6e6e73]">{result.snippet}</p>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              className="app-no-drag rounded-md bg-[#0071e3] px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-[#0068d1] disabled:opacity-50"
+              disabled={pending !== null}
+              onClick={(event) => {
+                event.stopPropagation()
+                void run('open', onOpen)
+              }}
+            >
+              {pending === 'open' ? 'Opening…' : 'Open'}
+            </button>
+            <button
+              type="button"
+              className="app-no-drag rounded-md bg-black/5 px-2.5 py-1 text-[11px] font-medium text-[#6e6e73] transition hover:bg-black/10 disabled:opacity-50"
+              disabled={pending !== null}
+              onClick={(event) => {
+                event.stopPropagation()
+                void run('finder', onShowInFinder)
+              }}
+            >
+              {pending === 'finder' ? 'Revealing…' : 'Show in Finder'}
+            </button>
+          </div>
+          {error ? <p className="mt-2 text-[11px] text-[#ff3b30]" role="alert">{error}</p> : null}
         </div>
       </div>
     </article>

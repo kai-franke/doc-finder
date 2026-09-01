@@ -62,3 +62,8 @@ export type IndexStatus = {
   lastUpdated: number | null;
   progress: IndexingProgress | null;
 };
+
+export type FileActionResult = {
+  ok: boolean;
+  message?: string;
+};
