@@ -1,5 +1,6 @@
 import { ipcRenderer, contextBridge, type IpcRendererEvent } from 'electron'
 import type {
+  FileActionResult,
   IndexStatus,
   IndexingError,
   IndexingProgress,
@@ -53,6 +54,12 @@ const api = {
     query: (query: string): Promise<SearchResult[]> => ipcRenderer.invoke('search:query', { query }),
     onResult: (callback: (results: SearchResult[]) => void): (() => void) =>
       subscribe('search:result', callback),
+  },
+  files: {
+    open: (filePath: string): Promise<FileActionResult> =>
+      ipcRenderer.invoke('file:open', { filePath }),
+    showInFinder: (filePath: string): Promise<FileActionResult> =>
+      ipcRenderer.invoke('file:showInFinder', { filePath }),
   },
 }
 

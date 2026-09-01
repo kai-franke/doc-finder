@@ -147,6 +147,8 @@ function App(): React.JSX.Element {
               loading={searching}
               hasIndex={(indexStatus?.indexedDocuments ?? 0) > 0}
               error={searchError}
+              onOpen={window.api.files.open}
+              onShowInFinder={window.api.files.showInFinder}
             />
           </div>
         </section>
