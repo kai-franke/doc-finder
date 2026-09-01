@@ -17,7 +17,7 @@
 'index:scanResult'    → ScanResult
 
 // Search
-'search:query'        → { query: string }
+'search:query'        → { query: string } → SearchResult[]
 'search:result'       → SearchResult[]
 
 // Folder management

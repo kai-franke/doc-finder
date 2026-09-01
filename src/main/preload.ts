@@ -5,6 +5,7 @@ import type {
   IndexingProgress,
   IndexingResult,
   ScanResult,
+  SearchResult,
   SourceFolder,
 } from '../shared/types'
 
@@ -47,6 +48,11 @@ const api = {
       subscribe('indexing:complete', callback),
     onError: (callback: (error: IndexingError) => void): (() => void) =>
       subscribe('indexing:error', callback),
+  },
+  search: {
+    query: (query: string): Promise<SearchResult[]> => ipcRenderer.invoke('search:query', { query }),
+    onResult: (callback: (results: SearchResult[]) => void): (() => void) =>
+      subscribe('search:result', callback),
   },
 }
 

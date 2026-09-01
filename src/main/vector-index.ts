@@ -148,6 +148,17 @@ export class VectorIndex {
     return table ? table.query().toArray() : []
   }
 
+  async search(vector: readonly number[], limit = 10): Promise<Record<string, unknown>[]> {
+    const table = await this.openTable()
+    if (!table) return []
+    return table
+      .vectorSearch([...vector])
+      .distanceType('cosine')
+      .limit(limit)
+      .select(['filePath', 'fileName', 'folderPath', 'text', '_distance'])
+      .toArray()
+  }
+
   async close(): Promise<void> {
     const connection = await this.connectionPromise
     connection?.close()
