@@ -30,7 +30,11 @@
 'file:showInFinder'   → { filePath: string } → FileActionResult
 
 // Ollama
-'ollama:status'       → { running: boolean; message?: string }
+'ollama:status'       → OllamaStatus
+'ollama:statusChanged'→ OllamaStatus
+'ollama:installModel' → OllamaStatus
+'ollama:pullProgress' → ModelPullProgress
+'ollama:openDownload' → void
 ```
 
 All payload types are exported from `src/shared/types.ts`. `IndexingProgress`

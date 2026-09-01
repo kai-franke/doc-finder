@@ -5,6 +5,8 @@ import type {
   IndexingError,
   IndexingProgress,
   IndexingResult,
+  ModelPullProgress,
+  OllamaStatus,
   ScanResult,
   SearchResult,
   SourceFolder,
@@ -60,6 +62,15 @@ const api = {
       ipcRenderer.invoke('file:open', { filePath }),
     showInFinder: (filePath: string): Promise<FileActionResult> =>
       ipcRenderer.invoke('file:showInFinder', { filePath }),
+  },
+  ollama: {
+    getStatus: (): Promise<OllamaStatus> => ipcRenderer.invoke('ollama:status'),
+    installModel: (): Promise<OllamaStatus> => ipcRenderer.invoke('ollama:installModel'),
+    openDownloadPage: (): Promise<void> => ipcRenderer.invoke('ollama:openDownload'),
+    onStatus: (callback: (status: OllamaStatus) => void): (() => void) =>
+      subscribe('ollama:statusChanged', callback),
+    onPullProgress: (callback: (progress: ModelPullProgress) => void): (() => void) =>
+      subscribe('ollama:pullProgress', callback),
   },
 }
 

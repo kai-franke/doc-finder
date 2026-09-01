@@ -67,3 +67,26 @@ export type FileActionResult = {
   ok: boolean;
   message?: string;
 };
+
+export type OllamaState =
+  | 'checking'
+  | 'starting'
+  | 'running'
+  | 'not-installed'
+  | 'model-missing'
+  | 'pulling'
+  | 'error';
+
+export type OllamaStatus = {
+  state: OllamaState;
+  running: boolean;
+  modelAvailable: boolean;
+  message?: string;
+};
+
+export type ModelPullProgress = {
+  status: string;
+  completed?: number;
+  total?: number;
+  percent?: number;
+};
