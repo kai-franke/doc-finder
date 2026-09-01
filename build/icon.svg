@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">DocFinder app icon</title>
+  <desc id="description">A white document and magnifying glass on a rounded blue macOS icon.</desc>
+  <defs>
+    <linearGradient id="background" x1="190" y1="110" x2="825" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#42A5FF"/>
+      <stop offset="0.5" stop-color="#087CF0"/>
+      <stop offset="1" stop-color="#0053C7"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="340" y1="220" x2="660" y2="740" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EAF5FF"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="24" stdDeviation="34" flood-color="#003B8F" flood-opacity="0.34"/>
+    </filter>
+    <filter id="paperShadow" x="180" y="140" width="650" height="700" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#004EA8" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="72" y="56" width="880" height="880" rx="206" fill="url(#background)"/>
+    <path d="M164 281c0-73 59-132 132-132h432c73 0 132 59 132 132v76c-221 58-452 48-696-15v-61Z" fill="#FFFFFF" opacity="0.08"/>
+  </g>
+
+  <g filter="url(#paperShadow)">
+    <path d="M300 206h287l139 139v363c0 43-35 78-78 78H300c-43 0-78-35-78-78V284c0-43 35-78 78-78Z" fill="url(#paper)"/>
+    <path d="M587 206v91c0 27 22 48 48 48h91L587 206Z" fill="#B9DEFF"/>
+    <path d="M587 206v91c0 27 22 48 48 48h91" fill="none" stroke="#84C5FF" stroke-width="16" stroke-linejoin="round"/>
+    <path d="M326 424h272M326 510h228M326 596h158" fill="none" stroke="#1684EB" stroke-width="30" stroke-linecap="round" opacity="0.74"/>
+  </g>
+
+  <g>
+    <circle cx="638" cy="621" r="151" fill="#0879E8" stroke="#FFFFFF" stroke-width="54"/>
+    <circle cx="638" cy="621" r="93" fill="#9DD4FF" opacity="0.72"/>
+    <path d="M747 730 851 834" fill="none" stroke="#FFFFFF" stroke-width="67" stroke-linecap="round"/>
+    <path d="M747 730 851 834" fill="none" stroke="#DFF2FF" stroke-width="31" stroke-linecap="round" opacity="0.5"/>
+    <path d="M582 578c27-35 72-51 114-35" fill="none" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round" opacity="0.6"/>
+  </g>
+</svg>

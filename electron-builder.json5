@@ -1,43 +1,46 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.kaifranke.docfinder",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "DocFinder",
   "directories": {
-    "output": "release/${version}"
+    "output": "release/${version}",
+    "buildResources": "build"
   },
   "files": [
     "dist",
-    "dist-electron"
+    "dist-electron",
+    "package.json",
+    "!node_modules/@huggingface/**/*",
+    "!node_modules/@img/**/*",
+    "!node_modules/onnxruntime-common/**/*",
+    "!node_modules/onnxruntime-node/**/*",
+    "!node_modules/onnxruntime-web/**/*",
+    "!node_modules/sharp/**/*"
+  ],
+  "asarUnpack": [
+    "node_modules/@lancedb/**/*"
   ],
   "mac": {
-    "target": [
-      "dmg"
-    ],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
-  },
-  "win": {
+    "icon": "icon.icns",
+    "category": "public.app-category.productivity",
+    "identity": "-",
+    "hardenedRuntime": false,
     "target": [
       {
-        "target": "nsis",
-        "arch": [
-          "x64"
-        ]
+        "target": "dmg",
+        "arch": ["arm64"]
+      },
+      {
+        "target": "dir",
+        "arch": ["arm64"]
       }
     ],
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    "artifactName": "${productName}-${version}-${arch}.${ext}"
   },
-  "nsis": {
-    "oneClick": false,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
-  },
-  "linux": {
-    "target": [
-      "AppImage"
-    ],
-    "artifactName": "${productName}-Linux-${version}.${ext}"
+  "dmg": {
+    "title": "${productName} ${version}",
+    "artifactName": "${productName}-${version}-${arch}.${ext}"
   }
 }
