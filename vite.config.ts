@@ -23,7 +23,7 @@ export default defineConfig({
         },
       },
       preload: {
-        input: path.join(__dirname, "src/main/preload.ts"),
+        input: path.join(import.meta.dirname, "src/main/preload.ts"),
       },
     }),
   ],

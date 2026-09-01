@@ -1,177 +1,125 @@
 # DocFinder
- 
-> Semantic search for your local PDF documents – fully private, no cloud, no costs.
- 
-DocFinder is a desktop app that makes all your PDFs searchable using AI. Instead of searching for exact keywords, you can describe what you are looking for in natural language – DocFinder finds the right documents based on meaning.
- 
----
- 
-## Features
- 
-- **Natural language search** – Search for "invoices related to my car" instead of exact filenames
-- **Multiple source folders** – Add as many folders as you want, including all subfolders
-- **Fully local & private** – No data ever leaves your machine. No cloud, no API costs
-- **Persistent index** – Index your documents once, search anytime
-- **Open directly** – Open found PDFs in Preview or reveal them in Finder
 
----
- 
-## How it works
- 
-DocFinder uses **semantic embeddings** to understand the meaning of your documents. Each PDF is split into chunks of text, which are converted into mathematical vectors by a local AI model. When you search, your query is converted into the same kind of vector and compared against all stored vectors – the closest matches are your results.
- 
-```
-Indexing:   PDF → extract text → split into chunks → generate embeddings → store in LanceDB
-Searching:  query → generate embedding → find similar vectors → return ranked results
-```
- 
-Everything runs locally using [Ollama](https://ollama.com) and [LanceDB](https://docs.lancedb.com/).
- 
----
- 
-## Prerequisites
- 
-Before running DocFinder, make sure you have the following installed:
- 
-- **Node.js** v24 (the exact development version is recorded in `.nvmrc`) — [nodejs.org](https://nodejs.org)
-- **Ollama** — [ollama.com](https://ollama.com)
-After installing Ollama, pull the embedding model:
- 
+DocFinder is a private semantic search app for local PDF documents. Add one or more folders, build a local index, and search by meaning instead of exact filenames or keywords.
+
+All PDF text, embeddings, queries, and the LanceDB index stay on your Mac. DocFinder has no cloud backend and does not upload documents. Network access is only needed when Ollama itself downloads the embedding model.
+
+## Features
+
+- Natural-language semantic search across local PDFs
+- Multiple source folders, including nested folders
+- Incremental indexing for new, changed, and removed files
+- Ranked snippets with direct **Open** and **Show in Finder** actions
+- Local embeddings through Ollama and `nomic-embed-text`
+- Persistent local vector index through LanceDB
+- Indexing progress, cancellation, clear error states, and local diagnostics
+
+## Requirements
+
+- macOS on Apple silicon
+- [Node.js 24](https://nodejs.org/) for source development; the exact version is in `.nvmrc`
+- npm, included with Node.js
+- [Ollama for macOS](https://ollama.com/download)
+- Approximately 274 MB of free space for `nomic-embed-text`, plus space for the local index
+
+Scanned image-only PDFs need OCR and are not supported by this MVP. Password-protected, damaged, inaccessible, and empty PDFs are skipped or retained safely without stopping the remaining indexing run.
+
+## Install the macOS app
+
+1. Install Ollama from [ollama.com/download](https://ollama.com/download).
+2. Open `DocFinder-1.0.0-arm64.dmg` from `release/1.0.0` and drag **DocFinder** to **Applications**.
+3. Because this MVP build is unsigned and not notarized, Control-click **DocFinder**, choose **Open**, then confirm the macOS prompt on first launch.
+4. If the sidebar reports that `nomic-embed-text` is missing, choose **Install model · 274 MB** and confirm the download. DocFinder never downloads the model without confirmation.
+
+You can also install the model yourself:
+
 ```bash
 ollama pull nomic-embed-text
 ```
- 
-> DocFinder starts Ollama automatically when the app launches. You do not need to run `ollama serve` manually.
- 
----
 
-## Mockup
+DocFinder uses an already running Ollama server when one exists. Otherwise it starts `ollama serve` and stops only that app-owned process when DocFinder quits.
 
-[Mockup](https://github.com/user-attachments/files/27385294/mockup.html)
+## Use DocFinder
 
----
-## Installation
- 
-### Run from source
- 
+1. Choose **Add folder** and select a folder containing PDFs. Subfolders are included.
+2. Wait for the background scan, then choose **Update index**. You can cancel a running update.
+3. Enter a natural-language query, such as `invoice for the office chairs`, and press Return. Search also starts after a short typing pause.
+4. Select a result or choose **Open** to open the PDF. Choose **Show in Finder** to reveal it.
+5. Run **Update index** again when the sidebar reports new, changed, or removed files.
+
+Removing a source folder removes documents that are no longer covered by another registered folder. The index and manifest are stored below the app's macOS Application Support directory.
+
+## Develop from source
+
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/docfinder.git
-cd docfinder
- 
-# Install dependencies
+git clone git@github.com:kai-franke/doc-finder.git
+cd doc-finder
+nvm use 24.11.1
 npm install
- 
-# Start the app in development mode
 npm run dev
 ```
- 
-### Build for macOS
- 
+
+Development work is integrated through feature branches into `development`. `main` remains the stable branch and is updated only through an explicit release PR.
+
+Useful commands:
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start Electron with Vite hot reload and development tools |
+| `npm test` | Run Main Process and React tests |
+| `npm run lint` | Run ESLint with zero warnings allowed |
+| `npm run typecheck` | Check TypeScript without emitting files |
+| `npm run build` | Build the unsigned Apple-silicon app and DMG |
+
+## Production build
+
+On an Apple-silicon Mac with Node 24:
+
 ```bash
+nvm use 24.11.1
+npm install
 npm run build
 ```
- 
-The built `.app` file will be located in the `dist/` folder.
- 
----
- 
-## Usage
- 
-1. **Add folders** – Click "Add folder" in the sidebar and select a folder. Repeat for as many folders as you want.
-2. **Index your documents** – Click "Update index". DocFinder will search for and process all PDFs inside of the selected folders and sub-folders and build the search index. This may take a few minutes depending on the number of documents.
-3. **Search** – Type a natural language query in the search field and press Enter. DocFinder will return the most relevant documents.
-4. **Open documents** – Click "Open" to open a PDF in Preview, or "Show in Finder" to reveal it in Finder.
-> **Re-indexing:** The "Update index" button will indicate newly added to or deleted documents in your folders. The Re-indexing will process only new files – existing entries are kept.
- 
----
- 
-## Tech Stack
- 
+
+Build artifacts are written to `release/1.0.0`:
+
+- `mac-arm64/DocFinder.app` — locally ad-hoc-signed application bundle
+- `DocFinder-1.0.0-arm64.dmg` — unsigned installer image
+
+Production windows disable Chromium development tools. LanceDB native modules are unpacked from ASAR so they can load inside the application bundle. LanceDB's optional HuggingFace/ONNX embedding provider is excluded because DocFinder uses Ollama exclusively. The app uses the ad-hoc signature required to run arm64 binaries locally; Developer ID signing and Apple notarization are intentionally outside this MVP.
+
+## Local data and privacy
+
+DocFinder processes PDF content on the local machine. Ollama creates embeddings locally, and LanceDB stores them locally. Neither PDFs, extracted text, embeddings, nor search queries are sent to DocFinder servers because no DocFinder server exists.
+
+Developer diagnostics are stored locally at `~/Library/Application Support/DocFinder/logs/docfinder.log`. They may contain local file paths and technical errors, but are not transmitted. Remove the Application Support folder to delete DocFinder settings, logs, manifest, and vector index.
+
+## Architecture
+
+```text
+PDF folders → bounded scanner → text extraction → chunks
+                                           ↓
+query → Ollama embeddings → LanceDB cosine search → ranked documents
+```
+
 | Layer | Technology |
-|---|---|
-| Desktop app | [Electron](https://www.electronjs.org) via [electron-vite](https://electron-vite.org) |
-| UI | [React](https://react.dev) + [Tailwind CSS](https://tailwindcss.com) + TypeScript |
-| PDF text extraction | [pdf-parse](https://www.npmjs.com/package/pdf-parse) |
-| Embeddings | [Ollama](https://ollama.com) + [nomic-embed-text](https://huggingface.co/nomic-ai/nomic-embed-text-v1) |
-| Vector database | [LanceDB](https://lancedb.github.io/lancedb/) |
-| Settings persistence | [electron-store](https://github.com/sindresorhus/electron-store) |
- 
----
- 
-## Project Structure
- 
-```
-docfinder/
-├── src/
-│   ├── main/              # Electron Main Process (Node.js)
-│   │   └── index.ts       # App lifecycle, IPC handlers, file system access
-│   ├── renderer/          # React UI (Renderer Process)
-│   │   ├── App.tsx
-│   │   └── index.tsx
-│   └── shared/            # Shared types used by both processes
-│       └── types.ts
-├── docs/                  # Screenshots and documentation assets
-├── package.json
-├── tsconfig.json
-└── tailwind.config.js
-```
- 
----
- 
-## Development
- 
-### Branching strategy
- 
-Each user story is developed in its own feature branch:
- 
-```bash
-git checkout -b feature/us-01-setup
-```
- 
-Branches are merged into `main` via pull requests once all acceptance criteria are met.
- 
-### Available scripts
- 
-| Script | Description |
-|---|---|
-| `npm run dev` | Start app in development mode with hot reload |
-| `npm run build` | Build production `.app` |
-| `npm run lint` | Run ESLint |
-| `npm run typecheck` | Run TypeScript type checker |
- 
----
- 
-## Roadmap
- 
-### Version 1 – MVP (current)
-- [x] Folder management with persistent storage
-- [x] PDF indexing with progress tracking
-- [x] Semantic search with result cards
-- [x] Open documents directly from results
-### Version 2 – Chat / RAG
-- [ ] Ask questions in natural language about your documents
-- [ ] AI answers based on document content (RAG pipeline)
-- [ ] Source references in answers ("from document X, page 3")
----
- 
+| --- | --- |
+| Desktop | Electron + TypeScript |
+| UI | React + Tailwind CSS |
+| PDF extraction | pdf-parse |
+| Embeddings | Ollama + nomic-embed-text |
+| Vector index | LanceDB |
+| Persistent settings | electron-store |
+
+IPC payloads are documented in [`docs/ipc-contracts.md`](docs/ipc-contracts.md), PDF behavior in [`docs/pdf-processing.md`](docs/pdf-processing.md), and error behavior in [`docs/error-handling.md`](docs/error-handling.md).
+
 ## Known limitations
- 
-- **Scanned PDFs** — DocFinder can only search PDFs that contain embedded text. Scanned image-only PDFs are not supported in the current version (OCR support planned).
-- **macOS only** — The current build targets macOS. Windows and Linux support is not planned at this time.
-- **Ollama required** — DocFinder requires Ollama to be installed. The app will guide you through installation if it is not detected.
----
- 
-## Contributing
- 
-This is a learning project. Contributions, suggestions and feedback are welcome.
- 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes
-4. Open a pull request
----
- 
+
+- macOS Apple silicon only for the current release
+- Unsigned and not notarized
+- No OCR for scanned image-only PDFs
+- No chat/RAG answer generation
+
 ## License
- 
-MIT License — see [LICENSE](LICENSE) for details.
+
+MIT — see [`LICENSE`](LICENSE).

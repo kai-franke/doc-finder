@@ -1,7 +1,10 @@
 {
   "name": "doc-finder",
+  "description": "Private semantic search for local PDF documents",
+  "author": "Kai Franke",
+  "license": "MIT",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
