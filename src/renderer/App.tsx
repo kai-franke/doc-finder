@@ -11,6 +11,7 @@ import IndexStatusPanel from './components/IndexStatusPanel'
 import OllamaStatusPanel from './components/OllamaStatusPanel'
 import ResultList from './components/ResultList'
 import SearchBar from './components/SearchBar'
+import { friendlyRendererError } from './renderer-errors'
 
 function App(): React.JSX.Element {
   const [folders, setFolders] = useState<SourceFolder[]>([])
@@ -21,19 +22,24 @@ function App(): React.JSX.Element {
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
+  const [appError, setAppError] = useState<string | null>(null)
   const searchRequest = useRef(0)
 
   // Beim Start der App die gespeicherten Ordner laden und zusätzlich auf
   // Hintergrund-Aktualisierungen horchen (z. B. wenn eine PDF-Zählung im
   // Hauptprozess fertig geworden ist).
   useEffect(() => {
-    window.api.folders.list().then(setFolders)
+    void window.api.folders.list().then(setFolders).catch((error) => {
+      setAppError(friendlyRendererError(error, 'Your source folders could not be loaded.'))
+    })
     const unsubscribe = window.api.folders.onChanged(setFolders)
     return unsubscribe
   }, [])
 
   useEffect(() => {
-    window.api.index.getStatus().then(setIndexStatus)
+    void window.api.index.getStatus().then(setIndexStatus).catch((error) => {
+      setAppError(friendlyRendererError(error, 'The document index could not be loaded.'))
+    })
     const unsubscribers = [
       window.api.index.onStatus(setIndexStatus),
       window.api.index.onComplete(setIndexResult),
@@ -43,17 +49,32 @@ function App(): React.JSX.Element {
   }, [])
 
   async function handleAddFolder() {
-    setFolders(await window.api.folders.add())
+    setAppError(null)
+    try {
+      setFolders(await window.api.folders.add())
+    } catch (error) {
+      setAppError(friendlyRendererError(error, 'The folder could not be added.'))
+    }
   }
 
   async function handleRemoveFolder(folderPath: string) {
-    setFolders(await window.api.folders.remove(folderPath))
+    setAppError(null)
+    try {
+      setFolders(await window.api.folders.remove(folderPath))
+    } catch (error) {
+      setAppError(friendlyRendererError(error, 'The folder could not be removed.'))
+    }
   }
 
   async function handleStartIndexing() {
     setIndexResult(null)
     setIndexErrors([])
-    await window.api.index.start()
+    setAppError(null)
+    try {
+      await window.api.index.start()
+    } catch (error) {
+      setAppError(friendlyRendererError(error, 'The index could not be updated. Please try again.'))
+    }
   }
 
   function handleAbortIndexing() {
@@ -71,7 +92,7 @@ function App(): React.JSX.Element {
     } catch (error) {
       if (request === searchRequest.current) {
         setResults([])
-        setSearchError(error instanceof Error ? error.message : 'Search could not be completed.')
+        setSearchError(friendlyRendererError(error, 'Search could not be completed.'))
       }
     } finally {
       if (request === searchRequest.current) setSearching(false)
@@ -95,7 +116,7 @@ function App(): React.JSX.Element {
           className="flex w-[240px] shrink-0 flex-col overflow-hidden border-r border-black/14 bg-[#ececec]"
           aria-label="Source folders and status"
         >
-          <section className="px-3 pb-2 pt-4">
+          <section className="min-h-0 flex-1 overflow-y-auto px-3 pb-2 pt-4">
             <h2 className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.06em] text-[#aeaeb2]">
               Source Folders
             </h2>
@@ -136,6 +157,11 @@ function App(): React.JSX.Element {
             <div className="mt-2 px-0.5 text-xs text-[#aeaeb2]">
               <span>{results.length > 0 ? `${results.length} ${results.length === 1 ? 'result' : 'results'}` : 'Search results will appear below'}</span>
             </div>
+            {appError ? (
+              <div className="view-state mt-2 rounded-md bg-[#ff3b30]/8 px-3 py-2 text-[11.5px] text-[#c9342d]" role="alert">
+                {appError}
+              </div>
+            ) : null}
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto">

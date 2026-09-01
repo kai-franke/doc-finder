@@ -8,6 +8,7 @@ import {
   type PdfDiscoveryError,
 } from './pdf-discovery'
 import { parsePdfBuffer, type PdfBufferParser } from './pdf-extractor'
+import { logError } from './logger'
 
 export type PdfProcessingStage = 'discovery' | 'stat' | 'read' | 'parse'
 
@@ -43,7 +44,7 @@ function assertConcurrency(concurrency: number): void {
 }
 
 function defaultLogger(event: Extract<PdfProcessingEvent, { type: 'error' }>): void {
-  console.error(`[PDF processing:${event.stage}] ${event.filePath}: ${event.message}`)
+  logError(`pdf-${event.stage}`, event.message, { filePath: event.filePath })
 }
 
 function processingError(

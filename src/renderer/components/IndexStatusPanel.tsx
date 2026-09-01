@@ -66,7 +66,7 @@ function IndexStatusPanel({
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-black/10">
             <div
-              className="h-full rounded-full bg-[#0071e3] transition-[width] duration-300"
+              className="progress-fill h-full rounded-full bg-[#0071e3] transition-[width] duration-300"
               style={{ width: `${status.progress.percent}%` }}
             />
           </div>

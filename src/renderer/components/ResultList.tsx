@@ -13,7 +13,7 @@ type ResultListProps = {
 
 function EmptyState({ title, description }: { title: string; description: string }): React.JSX.Element {
   return (
-    <div className="flex min-h-full flex-col items-center justify-center p-10 text-center">
+    <div className="view-state flex min-h-full flex-col items-center justify-center p-10 text-center">
       <div className="text-[#aeaeb2] opacity-60" aria-hidden="true">
         <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
           <path d="M12 8h17l7 7v21a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.8" />
@@ -50,7 +50,7 @@ function ResultList({
     return <EmptyState title="No search results yet" description="Describe the document you are looking for above." />
   }
   return (
-    <div className="grid gap-2.5 p-5 pt-1" aria-label="Search results">
+    <div className="view-state grid gap-2.5 p-5 pt-1" aria-label="Search results">
       {results.map((result) => (
         <ResultCard
           key={result.filePath}

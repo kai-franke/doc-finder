@@ -4,6 +4,8 @@ import { constants, promises as fs } from 'node:fs'
 import { promisify } from 'node:util'
 import type { ModelPullProgress, OllamaStatus } from '../shared/types'
 import type { OllamaClient } from './ollama-client'
+import { logError, logInfo } from './logger'
+import { userMessage } from './user-errors'
 
 const execFileAsync = promisify(execFile)
 
@@ -154,7 +156,7 @@ export class OllamaManager {
       this.child.once('error', (error) => {
         spawnError = error
       })
-      this.child.stderr?.on('data', (data) => console.error(`[Ollama] ${String(data).trim()}`))
+      this.child.stderr?.on('data', (data) => logInfo('ollama', String(data).trim()))
       const attempts = Math.max(1, Math.ceil(this.startupTimeoutMs / this.pollIntervalMs))
       for (let attempt = 0; attempt < attempts; attempt += 1) {
         if (spawnError) throw spawnError
@@ -169,12 +171,13 @@ export class OllamaManager {
       if (spawnError) throw spawnError
       throw new Error('Ollama did not become ready within 10 seconds.')
     } catch (error) {
+      logError('ollama-start', error)
       await this.stop()
       const status: OllamaStatus = {
         state: 'error',
         running: false,
         modelAvailable: false,
-        message: error instanceof Error ? error.message : 'Ollama could not be started.',
+        message: userMessage(error, 'ollama'),
       }
       this.setStatus(status)
       return status
@@ -201,11 +204,12 @@ export class OllamaManager {
       this.setStatus(status)
       return status
     } catch (error) {
+      logError('ollama-model', error, { model: this.client.model })
       const status: OllamaStatus = {
         state: 'error',
         running: true,
         modelAvailable: false,
-        message: error instanceof Error ? error.message : 'The model could not be installed.',
+        message: userMessage(error, 'ollama'),
       }
       this.setStatus(status)
       return status

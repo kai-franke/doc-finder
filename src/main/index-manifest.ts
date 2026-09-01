@@ -1,5 +1,6 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
+import { logError } from './logger'
 
 export type IndexedFile = {
   filePath: string
@@ -69,7 +70,7 @@ export class IndexManifestStore {
       return parseManifest(value, this.model)
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        console.error(`Could not read index manifest ${this.filePath}:`, error)
+        logError('manifest-read', error, { filePath: this.filePath })
       }
       return emptyManifest(this.model)
     }

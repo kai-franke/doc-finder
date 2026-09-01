@@ -12,6 +12,8 @@ import { scanPdfInventory, scanResultFromManifest, type FileInventory } from './
 import type { IndexManifest } from './index-manifest'
 import { processPdfFiles, type PdfProcessingEvent, type PdfProcessingOptions } from './pdf-processing'
 import type { VectorIndex } from './vector-index'
+import { logError } from './logger'
+import { userMessage, type ErrorOperation } from './user-errors'
 
 type IndexBackend = Pick<VectorIndex, 'manifest' | 'removeFile'>
 type FileIndexer = Pick<DocumentIndexer, 'indexFile'>
@@ -85,6 +87,9 @@ export class IndexCoordinator {
     this.scanInventory = dependencies.scanInventory ?? scanPdfInventory
     this.updateFolderCounts = dependencies.updateFolderCounts
     this.processFiles = dependencies.processFiles ?? processPdfFiles
+    // Node treats an unobserved `error` event as fatal. IPC normally observes
+    // it, but the coordinator must also stay safe during startup and tests.
+    this.events.on('error', () => undefined)
   }
 
   on(event: 'status', listener: (value: IndexStatus) => void): () => void
@@ -129,7 +134,13 @@ export class IndexCoordinator {
       const manifest = await this.vectorIndex.manifest()
       this.applyManifest(manifest)
       this.status.scanResult = scanResultFromManifest(inventory.files, manifest)
-      for (const error of inventory.errors) this.events.emit('error', error)
+      for (const error of inventory.errors) {
+        logError('folder-scan', error.message, { filePath: error.filePath })
+        this.events.emit('error', {
+          filePath: error.filePath,
+          message: userMessage(error.message, 'scan'),
+        })
+      }
       this.events.emit('scanResult', this.status.scanResult)
       return this.status.scanResult
     } finally {
@@ -142,7 +153,12 @@ export class IndexCoordinator {
     if (this.indexingController) throw new Error('Indexing is already running.')
     const controller = new AbortController()
     this.indexingController = controller
-    await this.scan()
+    try {
+      await this.scan()
+    } catch (error) {
+      this.indexingController = undefined
+      throw error
+    }
     const scanResult = this.status.scanResult
     const filesToProcess = [...scanResult.newFiles, ...scanResult.changedFiles]
     const total = filesToProcess.length + scanResult.deletedFiles.length
@@ -167,9 +183,11 @@ export class IndexCoordinator {
       this.events.emit('progress', progress)
       this.emitStatus()
     }
-    const recordError = (error: IndexingError): void => {
-      errors.push(error)
-      this.events.emit('error', error)
+    const recordError = (error: IndexingError, operation: ErrorOperation): void => {
+      logError('index', error.message, { filePath: error.filePath, operation })
+      const friendlyError = { ...error, message: userMessage(error.message, operation) }
+      errors.push(friendlyError)
+      this.events.emit('error', friendlyError)
     }
 
     try {
@@ -179,7 +197,10 @@ export class IndexCoordinator {
           await this.vectorIndex.removeFile(filePath)
           deleted += 1
         } catch (error) {
-          recordError({ filePath, message: error instanceof Error ? error.message : String(error) })
+          recordError(
+            { filePath, message: error instanceof Error ? error.message : String(error) },
+            'index',
+          )
         }
         report(filePath)
       }
@@ -187,7 +208,10 @@ export class IndexCoordinator {
       if (!controller.signal.aborted) {
         for await (const event of this.processFiles(filesToProcess, { signal: controller.signal })) {
           if (event.type === 'error') {
-            recordError({ filePath: event.filePath, message: event.message })
+            recordError(
+              { filePath: event.filePath, message: event.message },
+              event.stage === 'parse' ? 'pdf-parse' : 'file',
+            )
             report(event.filePath)
             continue
           }
@@ -203,25 +227,35 @@ export class IndexCoordinator {
             indexed += 1
           } catch (error) {
             if (controller.signal.aborted) break
-            recordError({
-              filePath: event.filePath,
-              message: error instanceof Error ? error.message : String(error),
-            })
+            recordError(
+              {
+                filePath: event.filePath,
+                message: error instanceof Error ? error.message : String(error),
+              },
+              'index',
+            )
           }
           report(event.filePath)
         }
       }
     } finally {
+      this.indexingController = undefined
+      this.status.isIndexing = false
+      this.status.progress = null
+      try {
+        await this.scan()
+      } catch (error) {
+        recordError(
+          { filePath: 'Source folders', message: error instanceof Error ? error.message : String(error) },
+          'scan',
+        )
+      }
       result = {
         indexed,
         deleted,
         errors,
         aborted: controller.signal.aborted,
       }
-      this.indexingController = undefined
-      this.status.isIndexing = false
-      this.status.progress = null
-      await this.scan()
       this.events.emit('complete', result)
       this.emitStatus()
     }
