@@ -5,6 +5,9 @@ import type { VectorIndex } from './vector-index'
 type SearchIndex = Pick<VectorIndex, 'manifest' | 'search'>
 type QueryEmbedder = Pick<OllamaClient, 'getEmbedding'>
 
+export const SEARCH_CANDIDATE_LIMIT = 500
+export const SEARCH_RESULT_LIMIT = 50
+
 function stringField(row: Record<string, unknown>, field: string): string | null {
   return typeof row[field] === 'string' ? row[field] : null
 }
@@ -48,6 +51,7 @@ export class SearchService {
     const manifest = await this.index.manifest()
     if (Object.keys(manifest.files).length === 0 || manifest.vectorDimension === null) return []
     const vector = await this.ollama.getEmbedding(`search_query: ${normalizedQuery}`, signal)
-    return groupSearchRows(await this.index.search(vector, 10))
+    const candidates = await this.index.search(vector, SEARCH_CANDIDATE_LIMIT)
+    return groupSearchRows(candidates).slice(0, SEARCH_RESULT_LIMIT)
   }
 }
