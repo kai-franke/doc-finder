@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { IndexManifest } from './index-manifest'
-import { groupSearchRows, normalizeCosineDistance, SearchService } from './search-service'
+import {
+  groupSearchRows,
+  normalizeCosineDistance,
+  SEARCH_CANDIDATE_LIMIT,
+  SEARCH_RESULT_LIMIT,
+  SearchService,
+} from './search-service'
 
 const manifest: IndexManifest = {
   schemaVersion: 1,
@@ -36,7 +42,7 @@ describe('semantic search', () => {
     expect(results[0].snippet).toBe('best')
   })
 
-  it('embeds a prefixed query and requests ten chunks', async () => {
+  it('embeds a prefixed query and requests enough candidate chunks', async () => {
     const getEmbedding = vi.fn(async () => [1, 0, 0])
     const search = vi.fn(async () => [row('/docs/a.pdf', 'a.pdf', 'match', 0.1)])
     const service = new SearchService(
@@ -46,7 +52,30 @@ describe('semantic search', () => {
 
     await expect(service.search(' invoice ')).resolves.toMatchObject([{ fileName: 'a.pdf' }])
     expect(getEmbedding).toHaveBeenCalledWith('search_query: invoice', undefined)
-    expect(search).toHaveBeenCalledWith([1, 0, 0], 10)
+    expect(search).toHaveBeenCalledWith([1, 0, 0], SEARCH_CANDIDATE_LIMIT)
+  })
+
+  it('returns up to fifty distinct documents after grouping candidate chunks', async () => {
+    const candidates = Array.from({ length: 60 }, (_, index) =>
+      row(
+        `/docs/document-${index}.pdf`,
+        `document-${index}.pdf`,
+        `match ${index}`,
+        index / 100,
+      ),
+    )
+    candidates.push(row('/docs/document-0.pdf', 'document-0.pdf', 'weaker duplicate', 0.9))
+    const service = new SearchService(
+      { getEmbedding: async () => [1, 0, 0] },
+      { manifest: async () => manifest, search: async () => candidates },
+    )
+
+    const results = await service.search('query')
+
+    expect(results).toHaveLength(SEARCH_RESULT_LIMIT)
+    expect(results[0]).toMatchObject({ fileName: 'document-0.pdf', snippet: 'match 0' })
+    expect(results[results.length - 1]?.fileName).toBe('document-49.pdf')
+    expect(results.some((result) => result.fileName === 'document-50.pdf')).toBe(false)
   })
 
   it('returns an empty result without calling Ollama for an empty index', async () => {
